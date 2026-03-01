@@ -6,6 +6,7 @@ on:
 
 env:
   NODE_VERSION: '22'
+  PYTHON_VERSION: '3.11'
 
 permissions:
   contents: read
@@ -54,12 +55,87 @@ jobs:
       - name: Run TypeScript checks
         run: yarn typecheck
 
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Check black
+        run: uv run black --check packages/symmetries/src/ packages/symmetries/tests/
+
+      - name: Check isort
+        run: uv run isort --check-only packages/symmetries/src/ packages/symmetries/tests/
+
+      - name: Run flake8
+        run: uv run flake8 packages/symmetries/src/ packages/symmetries/tests/
+
+      - name: Run pylint
+        run: uv run pylint packages/symmetries/src/ packages/symmetries/tests/
+
+      - name: Run pydocstyle
+        run: uv run pydocstyle packages/symmetries/src/
+
+  typecheck-python:
+    name: Typecheck Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run mypy
+        run: uv run mypy packages/symmetries/src/ packages/symmetries/tests/
+
+  test-python:
+    name: Test Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run tests
+        run: cd packages/symmetries && uv run python -m pytest tests/ -v
+
   build:
     name: Build
     runs-on: ubuntu-latest
     needs:
       - lint
       - typecheck
+      - lint-python
+      - typecheck-python
+      - test-python
     steps:
       - uses: actions/checkout@v4
 

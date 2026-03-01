@@ -1,13 +1,68 @@
 [project]
 name = "symmetries-workspace"
 version = "0.0.0"
-description = "uv workspace root — not a real package"
+description = "uv workspace root -- not a real package"
 requires-python = ">=3.11"
 
 [tool.uv]
 package = false
 
+[tool.uv.workspace]
+members = ["packages/symmetries"]
+
+[tool.uv.sources]
+symmetries = { workspace = true }
+
 [dependency-groups]
 dev = [
     "pre-commit>=4.0.0",
+    "symmetries",
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "mypy>=1.13.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+    "flake8-docstrings>=1.7.0",
+    "pylint>=3.0.0",
+    "pydocstyle>=6.3.0",
 ]
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint."messages control"]
+disable = [
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-positional-arguments",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "import-error",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "unused-variable",
+    "unused-argument",
+    "import-outside-toplevel",
+]
+
+[tool.pydocstyle]
+convention = "numpy"
+match = "(?!test_).*\\.py"
+match-dir = "(?!tests).*"
+
+[tool.mypy]
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "galpy.*"
+ignore_missing_imports = true

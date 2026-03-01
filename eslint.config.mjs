@@ -14,7 +14,8 @@ export default [
       '**/build/**',
       '**/.docusaurus/**',
       '**/coverage/**',
-      '.yarn/**'
+      '.yarn/**',
+      '.venv/**'
     ]
   },
   eslint.configs.recommended,
