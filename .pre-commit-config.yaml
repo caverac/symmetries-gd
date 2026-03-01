@@ -1,0 +1,34 @@
+repos:
+  - repo: local
+    hooks:
+      # --- JS/TS formatters (auto-fix) ---
+      - id: prettier
+        name: prettier
+        entry: yarn prettier --write
+        language: system
+        types_or: [javascript, jsx, ts, tsx, json, markdown, yaml, css]
+
+      # --- JS/TS linters (auto-fix where possible) ---
+      - id: eslint
+        name: eslint
+        entry: yarn eslint --max-warnings 0 --fix
+        language: system
+        types_or: [javascript, jsx, ts, tsx]
+
+      # --- JS/TS typecheck (whole-project) ---
+      - id: typecheck-ts
+        name: tsc
+        entry: yarn typecheck
+        language: system
+        pass_filenames: false
+        types_or: [ts, tsx]
+
+  # --- Commit message lint ---
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: commitlint
+        entry: yarn commitlint --edit
+        language: system
+        stages: [commit-msg]
+        always_run: true

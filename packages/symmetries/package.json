@@ -1,0 +1,19 @@
+{
+  "name": "@symmetries/cli",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "symmetries": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'No tests yet'"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
