@@ -8,15 +8,17 @@ requires-python = ">=3.11"
 package = false
 
 [tool.uv.workspace]
-members = ["packages/symmetries"]
+members = ["packages/symmetries", "packages/experiments"]
 
 [tool.uv.sources]
 symmetries = { workspace = true }
+experiments = { workspace = true }
 
 [dependency-groups]
 dev = [
     "pre-commit>=4.0.0",
     "symmetries",
+    "experiments",
     "pytest>=8.0.0",
     "pytest-cov>=6.0.0",
     "mypy>=1.13.0",
@@ -62,7 +64,13 @@ match-dir = "(?!tests).*"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+explicit_package_bases = true
+mypy_path = [
+    "packages/symmetries/src",
+    "packages/experiments/src",
+]
 
 [[tool.mypy.overrides]]
 module = "galpy.*"
 ignore_missing_imports = true
+

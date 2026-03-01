@@ -73,19 +73,19 @@ jobs:
         run: uv sync
 
       - name: Check black
-        run: uv run black --check packages/symmetries/src/ packages/symmetries/tests/
+        run: uv run black --check packages/symmetries/src/ packages/symmetries/tests/ packages/experiments/src/ packages/experiments/tests/
 
       - name: Check isort
-        run: uv run isort --check-only packages/symmetries/src/ packages/symmetries/tests/
+        run: uv run isort --check-only packages/symmetries/src/ packages/symmetries/tests/ packages/experiments/src/ packages/experiments/tests/
 
       - name: Run flake8
-        run: uv run flake8 packages/symmetries/src/ packages/symmetries/tests/
+        run: uv run flake8 packages/symmetries/src/ packages/symmetries/tests/ packages/experiments/src/ packages/experiments/tests/
 
       - name: Run pylint
-        run: uv run pylint packages/symmetries/src/ packages/symmetries/tests/
+        run: uv run pylint packages/symmetries/src/ packages/symmetries/tests/ packages/experiments/src/ packages/experiments/tests/
 
       - name: Run pydocstyle
-        run: uv run pydocstyle packages/symmetries/src/
+        run: uv run pydocstyle packages/symmetries/src/ packages/experiments/src/
 
   typecheck-python:
     name: Typecheck Python
@@ -105,7 +105,7 @@ jobs:
         run: uv sync
 
       - name: Run mypy
-        run: uv run mypy packages/symmetries/src/ packages/symmetries/tests/
+        run: uv run mypy packages/symmetries/src/ packages/symmetries/tests/ packages/experiments/src/ packages/experiments/tests/
 
   test-python:
     name: Test Python
@@ -124,8 +124,11 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Run tests
+      - name: Run symmetries tests
         run: cd packages/symmetries && uv run python -m pytest tests/ -v
+
+      - name: Run experiments tests
+        run: cd packages/experiments && uv run python -m pytest tests/ -v
 
   build:
     name: Build
