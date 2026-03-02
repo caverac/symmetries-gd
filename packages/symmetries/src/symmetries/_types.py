@@ -15,27 +15,27 @@ class PotentialConfig:
     Parameters
     ----------
     smbh_mass : float
-        Mass of the supermassive black hole in solar masses.
+        Amplitude of the Kepler SMBH potential (galpy natural units).
     plummer_mass : float
-        Mass of the Plummer bulge in solar masses.
+        Amplitude of the Plummer bulge potential (galpy natural units).
     plummer_scale : float
-        Scale radius of the Plummer sphere in kpc.
-    bar_mass : float
-        Mass of the Dehnen bar in solar masses.
+        Scale radius of the Plummer sphere (galpy natural units).
+    bar_strength : float
+        Bar strength parameter Af for the Dehnen bar potential.
     bar_scale : float
-        Scale length of the bar in kpc.
+        Bar radius rb (galpy natural units).
     bar_tform : float
-        Bar formation time in Gyr.
+        Bar formation time (galpy natural units, negative = past).
     bar_tsteady : float
-        Time for bar to reach full strength in Gyr.
+        Time for bar to reach full strength (galpy natural units).
     bar_pattern_speed : float
-        Bar pattern speed in km/s/kpc.
+        Bar pattern speed (galpy natural units).
     """
 
-    smbh_mass: float = 4e6
-    plummer_mass: float = 1e10
+    smbh_mass: float = 0.1
+    plummer_mass: float = 0.9
     plummer_scale: float = 0.5
-    bar_mass: float = 1e9
+    bar_strength: float = 0.01
     bar_scale: float = 1.0
     bar_tform: float = -5.0
     bar_tsteady: float = 2.0

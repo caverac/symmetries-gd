@@ -5,7 +5,7 @@ between SO(4) (Keplerian) and SU(3) (harmonic) symmetry limits.
 """
 
 from symmetries._types import InvariantResult, PhasePoint, PotentialConfig, VarianceComparison
-from symmetries.analysis import compare_variances, compute_invariants, omega_from_plummer
+from symmetries.analysis import compare_variances, compute_invariants, omega_from_plummer, smbh_influence_radius
 from symmetries.invariants import compute_c2
 from symmetries.tensors import (
     angular_momentum_squared,
@@ -33,5 +33,6 @@ __all__ = [
     "lrl_tensor",
     "lrl_vector",
     "omega_from_plummer",
+    "smbh_influence_radius",
     "tensor_trace_squared",
 ]

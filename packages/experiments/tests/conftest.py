@@ -13,6 +13,7 @@ matplotlib.use("Agg")
 
 @pytest.fixture()
 def simulation_data_dir(tmp_path: Path) -> Path:
+    """Create a temporary directory with a simulation.npz file."""
     n = 5
     np.savez(
         tmp_path / "simulation.npz",
@@ -36,6 +37,7 @@ def simulation_data_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture()
 def docs_img_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Redirect DOCS_IMG_DIR to a temporary directory."""
     img_dir = tmp_path / "img"
     img_dir.mkdir()
     monkeypatch.setattr("experiments._constants.DOCS_IMG_DIR", img_dir)

@@ -34,9 +34,12 @@ def _mock_comparison(n: int = 2) -> VarianceComparison:
 
 
 class TestSimulate:
+    """Tests for the simulate CLI command."""
+
     @patch("experiments.commands.simulate.compare_variances")
     @patch("experiments.commands.simulate.compute_invariants")
     def test_creates_npz(self, mock_compute: MagicMock, mock_compare: MagicMock, tmp_path: Path) -> None:
+        """Verify simulate writes a valid .npz file with expected keys."""
         mock_compute.return_value = _mock_result()
         mock_compare.return_value = _mock_comparison()
 
@@ -58,6 +61,7 @@ class TestSimulate:
     @patch("experiments.commands.simulate.compare_variances")
     @patch("experiments.commands.simulate.compute_invariants")
     def test_help(self, mock_compute: MagicMock, mock_compare: MagicMock) -> None:
+        """Verify --help exits cleanly and lists expected options."""
         runner = CliRunner()
         result = runner.invoke(simulate, ["--help"])
         assert result.exit_code == 0

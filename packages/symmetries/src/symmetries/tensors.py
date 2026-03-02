@@ -234,6 +234,149 @@ def generalized_tensor(
     return kinetic + spatial + scalar  # type: ignore[no-any-return]
 
 
+def sigmoid(
+    r: NDArray[np.floating],
+    r_core: float,
+) -> NDArray[np.floating]:
+    """Compute the sigmoid transition function centered at r_core.
+
+    Parameters
+    ----------
+    r : NDArray
+        Radial distances, shape ``(...)``.
+    r_core : float
+        Core radius defining the transition scale.
+
+    Returns
+    -------
+    NDArray
+        Sigmoid values in [0, 1], shape ``(...)``.
+    """
+    lam = r / r_core
+    return 1.0 / (1.0 + np.exp(-4.0 * (lam - 1.0)))  # type: ignore[no-any-return]
+
+
+def kepler_energy(
+    pos: NDArray[np.floating],
+    vel: NDArray[np.floating],
+    mu: float,
+) -> NDArray[np.floating]:
+    """Compute Kepler orbital energy E_K = v^2/2 - mu/r.
+
+    Parameters
+    ----------
+    pos : NDArray
+        Position vectors, shape ``(..., 3)``.
+    vel : NDArray
+        Velocity vectors, shape ``(..., 3)``.
+    mu : float
+        Gravitational parameter GM.
+
+    Returns
+    -------
+    NDArray
+        Kepler energy, shape ``(...)``.
+    """
+    v_sq = np.sum(vel**2, axis=-1)
+    r = np.sqrt(np.sum(pos**2, axis=-1))
+    r_safe = np.maximum(r, 1e-30)
+    return v_sq / 2.0 - mu / r_safe  # type: ignore[no-any-return]
+
+
+def kepler_casimir(
+    pos: NDArray[np.floating],
+    vel: NDArray[np.floating],
+    mu: float,
+    energy_floor: float = -1e-10,
+) -> NDArray[np.floating]:
+    """Compute the Kepler (SO(4)) Casimir C_K = L^2 + |A|^2 / (-2 E_K).
+
+    Parameters
+    ----------
+    pos : NDArray
+        Position vectors, shape ``(..., 3)``.
+    vel : NDArray
+        Velocity vectors, shape ``(..., 3)``.
+    mu : float
+        Gravitational parameter GM.
+    energy_floor : float
+        Floor for E_K to avoid division by zero.  Should be a negative
+        number whose magnitude sets the maximum allowed semi-major axis
+        via a_max = -mu / (2 * energy_floor).
+
+    Returns
+    -------
+    NDArray
+        Kepler Casimir, shape ``(...)``.
+    """
+    l_sq = angular_momentum_squared(pos, vel)
+    a_vec = lrl_vector(pos, vel, mu)
+    a_sq = np.sum(a_vec**2, axis=-1)
+    e_k = kepler_energy(pos, vel, mu)
+    e_k_safe = np.minimum(e_k, energy_floor)
+    return l_sq + a_sq / (-2.0 * e_k_safe)  # type: ignore[no-any-return]
+
+
+def traceless_fradkin(
+    pos: NDArray[np.floating],
+    vel: NDArray[np.floating],
+    omega: float,
+    mass: float,
+) -> NDArray[np.floating]:
+    """Compute the traceless part of the Fradkin tensor S = T - (Tr(T)/3) I.
+
+    Parameters
+    ----------
+    pos : NDArray
+        Position vectors, shape ``(..., 3)``.
+    vel : NDArray
+        Velocity vectors, shape ``(..., 3)``.
+    omega : float
+        Harmonic oscillator frequency.
+    mass : float
+        Particle mass.
+
+    Returns
+    -------
+    NDArray
+        Traceless Fradkin tensor, shape ``(..., 3, 3)``.
+    """
+    t = fradkin_tensor(pos, vel, omega, mass)
+    tr_t = np.einsum("...ii->...", t)
+    identity = np.eye(3)
+    return t - (tr_t[..., np.newaxis, np.newaxis] / 3.0) * identity  # type: ignore[no-any-return]
+
+
+def harmonic_casimir(
+    pos: NDArray[np.floating],
+    vel: NDArray[np.floating],
+    omega: float,
+    mass: float,
+) -> NDArray[np.floating]:
+    """Compute the harmonic (SU(3)) Casimir C_H = L^2 + Tr(S^2) / omega^2.
+
+    Parameters
+    ----------
+    pos : NDArray
+        Position vectors, shape ``(..., 3)``.
+    vel : NDArray
+        Velocity vectors, shape ``(..., 3)``.
+    omega : float
+        Harmonic oscillator frequency.
+    mass : float
+        Particle mass.
+
+    Returns
+    -------
+    NDArray
+        Harmonic Casimir, shape ``(...)``.
+    """
+    l_sq = angular_momentum_squared(pos, vel)
+    s = traceless_fradkin(pos, vel, omega, mass)
+    tr_s_sq = tensor_trace_squared(s)
+    return l_sq + tr_s_sq / omega**2
+
+
 def tensor_trace_squared(tensor: NDArray[np.floating]) -> NDArray[np.floating]:
     r"""Compute Tr(Q^2) = Q_ij * Q_ji.
 

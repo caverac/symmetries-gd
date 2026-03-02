@@ -58,12 +58,28 @@ def build_bar(config: PotentialConfig) -> Any:
         The galpy Dehnen bar potential instance.
     """
     return DehnenBarPotential(
-        amp=config.bar_mass,
-        a=config.bar_scale,
+        Af=config.bar_strength,
+        rb=config.bar_scale,
         tform=config.bar_tform,
         tsteady=config.bar_tsteady,
         omegab=config.bar_pattern_speed,
     )
+
+
+def build_axisymmetric(config: PotentialConfig) -> list[Any]:
+    """Build the axisymmetric part of the potential (Kepler + Plummer).
+
+    Parameters
+    ----------
+    config : PotentialConfig
+        Potential configuration.
+
+    Returns
+    -------
+    list
+        List of galpy potential instances ``[kepler, plummer]``.
+    """
+    return [build_kepler(config), build_plummer(config)]
 
 
 def build_composite(config: PotentialConfig) -> list[Any]:
@@ -79,4 +95,4 @@ def build_composite(config: PotentialConfig) -> list[Any]:
     list
         List of galpy potential instances ``[kepler, plummer, bar]``.
     """
-    return [build_kepler(config), build_plummer(config), build_bar(config)]
+    return [*build_axisymmetric(config), build_bar(config)]

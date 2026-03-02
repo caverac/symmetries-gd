@@ -11,7 +11,30 @@ from numpy.typing import NDArray
 from symmetries._types import InvariantResult, PotentialConfig, VarianceComparison
 from symmetries.invariants import compute_c2
 from symmetries.orbits import compute_actions, integrate_orbits
-from symmetries.potentials import build_composite
+from symmetries.potentials import build_axisymmetric, build_composite
+
+
+def smbh_influence_radius(mu: float, bulge_mass: float, bulge_scale: float) -> float:
+    r"""Compute the SMBH sphere-of-influence radius.
+
+    The influence radius is where the Keplerian potential equals the
+    Plummer potential: :math:`r_{\mathrm{infl}} = \mu \, a / M`.
+
+    Parameters
+    ----------
+    mu : float
+        SMBH gravitational parameter (mass in natural units).
+    bulge_mass : float
+        Mass of the Plummer bulge.
+    bulge_scale : float
+        Scale radius of the Plummer bulge.
+
+    Returns
+    -------
+    float
+        Influence radius in the same length units as *bulge_scale*.
+    """
+    return mu * bulge_scale / bulge_mass
 
 
 def omega_from_plummer(mass: float, scale: float) -> float:
@@ -75,14 +98,17 @@ def compute_invariants(
         Combined C_2 and J_R values for all particles and times.
     """
     potential = build_composite(config)
+    axisymmetric = build_axisymmetric(config)
     phase = integrate_orbits(r_cyl, vr, vt, z, vz, phi, potential, times)
 
-    mu = config.smbh_mass
-    omega = omega_from_plummer(config.plummer_mass, config.plummer_scale)
-    r_core = config.plummer_scale
-
-    c2 = compute_c2(phase.pos, phase.vel, r_core=r_core, mu=mu, omega=omega)
-    jr = compute_actions(phase, potential, delta=delta)
+    c2 = compute_c2(
+        phase.pos,
+        phase.vel,
+        mu=config.smbh_mass,
+        plummer_mass=config.plummer_mass,
+        plummer_scale=config.plummer_scale,
+    )
+    jr = compute_actions(phase, axisymmetric, delta=delta)
 
     return InvariantResult(c2=c2, jr=jr, time=times, phase=phase)
 

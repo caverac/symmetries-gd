@@ -11,7 +11,10 @@ from symmetries.orbits import cartesian_to_cylindrical, compute_actions, integra
 
 
 class TestCartesianToCylindrical:
+    """Tests for Cartesian to cylindrical coordinate conversion."""
+
     def test_on_x_axis(self) -> None:
+        """Verify conversion for a point on the x-axis."""
         pos = np.array([2.0, 0.0, 1.0])
         vel = np.array([1.0, 3.0, 0.5])
         r, vr, vt, z, vz, phi = cartesian_to_cylindrical(pos, vel)
@@ -23,6 +26,7 @@ class TestCartesianToCylindrical:
         np.testing.assert_allclose(vz, 0.5)
 
     def test_on_y_axis(self) -> None:
+        """Verify conversion for a point on the y-axis."""
         pos = np.array([0.0, 3.0, 0.0])
         vel = np.array([-1.0, 2.0, 0.0])
         r, vr, vt, z, vz, phi = cartesian_to_cylindrical(pos, vel)
@@ -32,6 +36,7 @@ class TestCartesianToCylindrical:
         np.testing.assert_allclose(vt, 1.0, atol=1e-14)
 
     def test_batch(self) -> None:
+        """Verify batch conversion returns correct shape and radii."""
         pos = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         vel = np.array([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]])
         r, vr, vt, z, vz, phi = cartesian_to_cylindrical(pos, vel)
@@ -39,6 +44,7 @@ class TestCartesianToCylindrical:
         np.testing.assert_allclose(r, [1.0, 1.0])
 
     def test_roundtrip_radius(self) -> None:
+        """Verify cylindrical radius matches Cartesian xy-magnitude."""
         rng = np.random.default_rng(20)
         pos = rng.standard_normal((10, 3))
         vel = rng.standard_normal((10, 3))
@@ -49,8 +55,11 @@ class TestCartesianToCylindrical:
 
 
 class TestIntegrateOrbits:
+    """Tests for galpy orbit integration wrapper."""
+
     @patch("symmetries.orbits.Orbit")
     def test_returns_phase_point(self, mock_orbit_cls: MagicMock) -> None:
+        """Verify single orbit integration returns a PhasePoint with correct shape."""
         mock_orb = MagicMock()
         mock_orbit_cls.return_value = mock_orb
 
@@ -80,6 +89,7 @@ class TestIntegrateOrbits:
 
     @patch("symmetries.orbits.Orbit")
     def test_multiple_particles(self, mock_orbit_cls: MagicMock) -> None:
+        """Verify multiple particles produce correctly stacked output."""
         mock_orb = MagicMock()
         mock_orbit_cls.return_value = mock_orb
 
@@ -107,9 +117,12 @@ class TestIntegrateOrbits:
 
 
 class TestComputeActions:
+    """Tests for Staeckel action computation."""
+
     @patch("symmetries.orbits.Orbit")
     @patch("symmetries.orbits.actionAngleStaeckel")
     def test_returns_jr_array(self, mock_aa_cls: MagicMock, mock_orbit_cls: MagicMock) -> None:
+        """Verify Jr array has correct shape and values."""
         mock_aa = MagicMock()
         mock_aa_cls.return_value = mock_aa
         mock_aa.return_value = (np.array([0.5]), np.array([1.0]), np.array([0.1]))
@@ -126,6 +139,7 @@ class TestComputeActions:
     @patch("symmetries.orbits.Orbit")
     @patch("symmetries.orbits.actionAngleStaeckel")
     def test_delta_passed(self, mock_aa_cls: MagicMock, mock_orbit_cls: MagicMock) -> None:
+        """Verify delta parameter is forwarded to actionAngleStaeckel."""
         mock_aa = MagicMock()
         mock_aa_cls.return_value = mock_aa
         mock_aa.return_value = (np.array([0.1]), np.array([0.2]), np.array([0.3]))
@@ -140,7 +154,10 @@ class TestComputeActions:
 
 @pytest.mark.slow()
 class TestIntegrationSlow:
+    """Slow integration tests using real galpy potentials."""
+
     def test_circular_orbit_real_galpy(self) -> None:
+        """Verify circular orbit integration with MWPotential2014 produces finite output."""
         from galpy.potential import MWPotential2014
 
         times = np.linspace(0.0, 1.0, 20)

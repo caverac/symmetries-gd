@@ -17,10 +17,14 @@ from experiments._constants import (
 
 
 class TestConstants:
+    """Tests for shared constants."""
+
     def test_docs_img_dir_is_path(self) -> None:
+        """Verify DOCS_IMG_DIR is a Path instance."""
         assert isinstance(DOCS_IMG_DIR, Path)
 
     def test_defaults_types(self) -> None:
+        """Verify all default constants have the expected types."""
         assert isinstance(DEFAULT_N_PARTICLES, int)
         assert isinstance(DEFAULT_R_MIN, float)
         assert isinstance(DEFAULT_R_MAX, float)
