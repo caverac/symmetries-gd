@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 import click
 import numpy as np
@@ -34,6 +35,14 @@ from symmetries import PotentialConfig, compare_variances, compute_invariants
     show_default=True,
     help="Output directory for NPZ file.",
 )
+@click.option("--smbh-mass", type=float, default=None, help="SMBH Kepler potential amplitude.")
+@click.option("--plummer-mass", type=float, default=None, help="Plummer bulge amplitude.")
+@click.option("--plummer-scale", type=float, default=None, help="Plummer sphere scale radius.")
+@click.option("--bar-strength", type=float, default=None, help="Dehnen bar strength Af.")
+@click.option("--bar-scale", type=float, default=None, help="Dehnen bar radius rb.")
+@click.option("--bar-tform", type=float, default=None, help="Bar formation time.")
+@click.option("--bar-tsteady", type=float, default=None, help="Bar steady-state timescale.")
+@click.option("--bar-pattern-speed", type=float, default=None, help="Bar pattern speed.")
 def simulate(
     n_particles: int,
     r_min: float,
@@ -43,6 +52,14 @@ def simulate(
     delta: float,
     seed: int,
     output_dir: Path,
+    smbh_mass: Optional[float],
+    plummer_mass: Optional[float],
+    plummer_scale: Optional[float],
+    bar_strength: Optional[float],
+    bar_scale: Optional[float],
+    bar_tform: Optional[float],
+    bar_tsteady: Optional[float],
+    bar_pattern_speed: Optional[float],
 ) -> None:
     """Run orbit integration and save results to NPZ."""
     rng = np.random.default_rng(seed)
@@ -55,7 +72,22 @@ def simulate(
     phi = rng.uniform(0, 2 * np.pi, size=n_particles)
 
     times = np.linspace(0.0, t_end, n_steps)
-    config = PotentialConfig()
+
+    config_fields: dict[str, float] = {}
+    for name, val in [
+        ("smbh_mass", smbh_mass),
+        ("plummer_mass", plummer_mass),
+        ("plummer_scale", plummer_scale),
+        ("bar_strength", bar_strength),
+        ("bar_scale", bar_scale),
+        ("bar_tform", bar_tform),
+        ("bar_tsteady", bar_tsteady),
+        ("bar_pattern_speed", bar_pattern_speed),
+    ]:
+        if val is not None:
+            config_fields[name] = val
+
+    config = PotentialConfig(**config_fields)
 
     console.print(f"[bold]Integrating {n_particles} orbits...[/bold]")
 
@@ -81,6 +113,14 @@ def simulate(
         n_steps=np.array(n_steps),
         delta=np.array(delta),
         seed=np.array(seed),
+        smbh_mass=np.array(config.smbh_mass),
+        plummer_mass=np.array(config.plummer_mass),
+        plummer_scale=np.array(config.plummer_scale),
+        bar_strength=np.array(config.bar_strength),
+        bar_scale=np.array(config.bar_scale),
+        bar_tform=np.array(config.bar_tform),
+        bar_tsteady=np.array(config.bar_tsteady),
+        bar_pattern_speed=np.array(config.bar_pattern_speed),
     )
 
     console.print(f"Saved: {out_path}")

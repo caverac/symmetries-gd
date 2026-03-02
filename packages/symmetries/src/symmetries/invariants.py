@@ -1,7 +1,7 @@
-r"""Deformed Casimir invariant C_2 = L^2 + Tr(Q_tilde^2) / omega^2.
+r"""Deformed Casimir invariant.
 
 Interpolates between the Kepler SO(4) and harmonic SU(3) Casimirs
-using the sigmoid-weighted generalized tensor Q_ij.
+using the theoretical Lie Algebra deformation parameters Psi and Phi.
 Pure NumPy -- no galpy.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-from symmetries.tensors import angular_momentum_squared, sigmoid, tensor_trace_squared
+from symmetries.tensors import angular_momentum_squared, phi_function, psi_function
 
 
 def compute_c2(
@@ -22,12 +22,11 @@ def compute_c2(
 ) -> NDArray[np.floating]:
     r"""Compute the deformed Casimir invariant.
 
-    .. math::
-        C_2 = L^2 + \frac{\mathrm{Tr}(\tilde{Q}^2)}{\omega^2}
+    Uses the parameterized Lie Algebra deformation operator:
+    Q_ij = p_i p_j / (2m) + Psi(r) x_i x_j + Phi(r) delta_ij
 
-    where :math:`Q_{ij} = p_i p_j / (2m) + (\Psi/2)\, x_i x_j` uses
-    the virial convention (factor 1/2 on Psi) so that Q reduces to the
-    Fradkin tensor T in the harmonic limit, giving :math:`C_2 \to C_H`.
+    The Casimir is C2 = alpha L^2 + beta Tr(Q_tilde^2)
+    where Q_tilde is the traceless part of Q.
 
     Parameters
     ----------
@@ -49,26 +48,41 @@ def compute_c2(
     NDArray
         Deformed Casimir, shape ``(...)``.
     """
-    r_core = mu * plummer_scale / plummer_mass
-    omega = np.sqrt(plummer_mass / plummer_scale**3)
+    # 1. Scaling parameters
+    r_core = (mu * plummer_scale / (plummer_mass + 1e-30)) if plummer_mass > 0 else 1e30
+    omega = np.sqrt(plummer_mass / (plummer_scale**3 + 1e-30))
 
+    # 2. Base components
     l_sq = angular_momentum_squared(pos, vel)
-
     r = np.sqrt(np.sum(pos**2, axis=-1))
-    r_safe = np.maximum(r, 1e-30)
 
-    sigma = sigmoid(r, r_core)
-    psi = (1.0 - sigma) * (mu / r_safe**3) + sigma * omega**2
+    # 3. Structural functions Psi and Phi
+    # Psi(r) interpolates force-gradient: mu/r^3 -> omega^2
+    # Phi(r) interpolates potential shift: -mu/r -> 0
+    psi = psi_function(r, r_core, mu, omega)
+    phi = phi_function(r, r_core, mu)
 
+    # 4. Construct Symmetry Operator Q_ij
+    # Q_ij = p_i p_j / (2m) + (Psi/2) x_i x_j + Phi delta_ij
+    # (Virial factor 1/2 on Psi ensures Q -> T_Fradkin in Harmonic limit)
     mom = mass * vel
     kinetic = np.einsum("...i,...j->...ij", mom, mom) / (2.0 * mass)
     pos_outer = np.einsum("...i,...j->...ij", pos, pos)
-    q = kinetic + (psi / 2.0)[..., np.newaxis, np.newaxis] * pos_outer
+    potential = (psi / 2.0)[..., np.newaxis, np.newaxis] * pos_outer
 
-    tr_q = np.einsum("...ii->...", q)
     identity = np.eye(3)
-    q_tilde = q - (tr_q[..., np.newaxis, np.newaxis] / 3.0) * identity
+    offset = phi[..., np.newaxis, np.newaxis] * identity
 
-    tr_q_tilde_sq = tensor_trace_squared(q_tilde)
+    q_tensor = kinetic + potential + offset
 
-    return l_sq + tr_q_tilde_sq / omega**2  # type: ignore[no-any-return]
+    # 5. Extract Traceless Casimir Component
+    tr_q = np.einsum("...ii->...", q_tensor)
+    q_tilde = q_tensor - (tr_q[..., np.newaxis, np.newaxis] / 3.0) * identity
+    tr_q_tilde_sq = np.einsum("...ij,...ji->...", q_tilde, q_tilde)
+
+    # 6. Final Casimir sum: C2 = L^2 + Tr(Q_tilde^2) / omega_eff^2
+    # In the transition, we must scale the trace term to match units of L^2.
+    # The effective frequency omega_eff(r) = sqrt(Psi(r)).
+    omega_eff_sq = np.maximum(psi, 1e-30)
+
+    return l_sq + tr_q_tilde_sq / omega_eff_sq  # type: ignore[no-any-return]

@@ -22,3 +22,6 @@ class TestCLI:
         result = runner.invoke(main, ["--help"])
         assert "simulate" in result.output
         assert "variance-plot" in result.output
+        assert "limit-test" in result.output
+        assert "stress-test" in result.output
+        assert "convergence" in result.output

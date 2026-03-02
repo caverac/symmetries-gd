@@ -104,9 +104,12 @@ def integrate_orbits(
         )
         orb.integrate(times, potential)
 
+        # Correctly extract Cartesian positions across all times
         pos_out[i, :, 0] = orb.x(times)
         pos_out[i, :, 1] = orb.y(times)
         pos_out[i, :, 2] = orb.z(times)
+
+        # Correctly extract Cartesian velocities across all times
         vel_out[i, :, 0] = orb.vx(times)
         vel_out[i, :, 1] = orb.vy(times)
         vel_out[i, :, 2] = orb.vz(times)

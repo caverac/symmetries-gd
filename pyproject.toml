@@ -53,6 +53,7 @@ disable = [
     "unused-variable",
     "unused-argument",
     "import-outside-toplevel",
+    "duplicate-code",
 ]
 
 [tool.pydocstyle]
