@@ -3,9 +3,26 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Protocol, runtime_checkable
 
 import numpy as np
 from numpy.typing import NDArray
+
+
+@runtime_checkable
+class GalpyPotential(Protocol):
+    """Structural protocol for galpy potential instances.
+
+    Captures the minimal interface used by our code and by galpy's
+    module-level helpers (``vcirc``, ``Orbit.integrate``, action-angle
+    finders).
+    """
+
+    def __call__(self, R: float, z: float, phi: float = ..., t: float = ...) -> float:  # pylint: disable=invalid-name
+        """Evaluate the potential at (R, z, phi, t)."""
+
+    def Rforce(self, R: float, z: float, phi: float = ..., t: float = ...) -> float:  # pylint: disable=invalid-name
+        """Evaluate the radial force at (R, z, phi, t)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,6 +37,12 @@ class PotentialConfig:
         Amplitude of the Plummer bulge potential (galpy natural units).
     plummer_scale : float
         Scale radius of the Plummer sphere (galpy natural units).
+    disk_mass : float
+        Mass of the Miyamoto-Nagai disk.
+    disk_a : float
+        Scale length of the disk.
+    disk_b : float
+        Scale height of the disk.
     bar_strength : float
         Bar strength parameter Af for the Dehnen bar potential.
     bar_scale : float
@@ -33,8 +56,11 @@ class PotentialConfig:
     """
 
     smbh_mass: float = 0.1
-    plummer_mass: float = 0.9
+    plummer_mass: float = 0.4
     plummer_scale: float = 0.5
+    disk_mass: float = 0.5
+    disk_a: float = 3.0
+    disk_b: float = 0.2
     bar_strength: float = 0.01
     bar_scale: float = 1.0
     bar_tform: float = -5.0
@@ -103,3 +129,56 @@ class VarianceComparison:
     var_jr: NDArray[np.floating]
     ratio: NDArray[np.floating]
     median_ratio: float = field(default=0.0)
+
+
+@dataclass(frozen=True, slots=True)
+class PopulationConfig:
+    """Configuration for a stellar population used in DF-based sampling.
+
+    Parameters
+    ----------
+    n_particles : int
+        Number of particles to sample.
+    hr : float
+        Radial scale length of the quasi-isothermal DF.
+    sr : float
+        Radial velocity dispersion at the solar radius.
+    sz : float
+        Vertical velocity dispersion at the solar radius.
+    hsr : float
+        Radial scale length of the radial velocity dispersion.
+    hsz : float
+        Radial scale length of the vertical velocity dispersion.
+    r_min : float
+        Minimum cylindrical radius for sampling.
+    r_max : float
+        Maximum cylindrical radius for sampling.
+    label : str
+        Human-readable label for this population.
+    """
+
+    n_particles: int
+    hr: float
+    sr: float
+    sz: float
+    hsr: float
+    hsz: float
+    r_min: float
+    r_max: float
+    label: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class InitialConditionsConfig:
+    """Configuration for DF-based initial condition sampling.
+
+    Parameters
+    ----------
+    populations : tuple[PopulationConfig, ...]
+        Tuple of population configurations to sample.
+    seed : int
+        Random seed for reproducibility.
+    """
+
+    populations: tuple[PopulationConfig, ...] = field(default_factory=tuple)
+    seed: int = 42

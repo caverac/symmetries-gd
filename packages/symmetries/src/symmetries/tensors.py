@@ -391,3 +391,59 @@ def tensor_trace_squared(tensor: NDArray[np.floating]) -> NDArray[np.floating]:
         Trace of the squared tensor, shape ``(...)``.
     """
     return np.einsum("...ij,...ji->...", tensor, tensor)  # type: ignore[no-any-return]
+
+
+def path_tensor(
+    pos: NDArray[np.floating],
+    vel: NDArray[np.floating],
+    r_core: float,
+    mu: float,
+    omega: float,
+    mass: float = 1.0,
+) -> NDArray[np.floating]:
+    r"""Compute the Lie-algebra path tensor Q_ij(lambda).
+
+    Interpolates between:
+    - Kepler Limit: A_ij / (-2E)  (LRL tensor normalized by energy)
+    - Harmonic Limit: T_ij / omega (Fradkin tensor normalized by freq)
+
+    Parameters
+    ----------
+    pos : NDArray
+        Position vectors, shape ``(..., 3)``.
+    vel : NDArray
+        Velocity vectors, shape ``(..., 3)``.
+    r_core : float
+        Core radius.
+    mu : float
+        Gravitational parameter.
+    omega : float
+        Harmonic frequency.
+    mass : float
+        Particle mass.
+
+    Returns
+    -------
+    NDArray
+        Interpolated tensor, shape ``(..., 3, 3)``.
+    """
+    r = np.sqrt(np.sum(pos**2, axis=-1))
+    sig = sigmoid(r, r_core)
+    sig_exp = sig[..., np.newaxis, np.newaxis]
+
+    # Kepler part: A_ij / (-2E)
+    # This term is only relevant when (1 - sig) > 0.
+    e_k = kepler_energy(pos, vel, mu)
+    e_k_safe = np.minimum(e_k, -1e-10)
+    a_tensor = lrl_tensor(pos, vel, mu)
+    kepler_term = (1.0 - sig_exp) * a_tensor / (-2.0 * e_k_safe[..., np.newaxis, np.newaxis])
+
+    # Harmonic part: T_ij / omega
+    # Avoid division by zero when omega -> 0 (Kepler limit)
+    if omega > 1e-15:
+        t_tensor = fradkin_tensor(pos, vel, omega, mass)
+        harmonic_term = sig_exp * t_tensor / omega
+    else:
+        harmonic_term = np.zeros_like(kepler_term)
+
+    return kepler_term + harmonic_term  # type: ignore[no-any-return]

@@ -4780,16 +4780,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@symmetries/cli@workspace:packages/symmetries":
-  version: 0.0.0-use.local
-  resolution: "@symmetries/cli@workspace:packages/symmetries"
-  dependencies:
-    typescript: "npm:^5.9.3"
-  bin:
-    symmetries: ./dist/index.js
-  languageName: unknown
-  linkType: soft
-
 "@symmetries/docs@workspace:packages/docs":
   version: 0.0.0-use.local
   resolution: "@symmetries/docs@workspace:packages/docs"

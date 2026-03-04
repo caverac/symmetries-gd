@@ -64,7 +64,7 @@ class TestConvergence:
     @patch("experiments.commands._shared.compare_variances")
     @patch("experiments.commands._shared.compute_invariants")
     def test_sweep_calls_compute_n_times(
-        self, mock_compute: MagicMock, mock_compare: MagicMock, tmp_path: Path, docs_img_dir: Path
+        self, mock_compute: MagicMock, mock_compare: MagicMock, tmp_path: Path, _docs_img_dir: Path
     ) -> None:
         """Verify compute_invariants is called once per sweep point."""
         mock_compute.return_value = _mock_result()

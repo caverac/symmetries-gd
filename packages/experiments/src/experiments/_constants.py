@@ -4,6 +4,7 @@ from pathlib import Path
 
 DOCS_IMG_DIR: Path = Path(__file__).resolve().parents[4] / "docs" / "static" / "img"
 
+# Defaults used by plot/analysis commands (stress-test, convergence, limit-test, migration-plot)
 DEFAULT_N_PARTICLES: int = 200
 DEFAULT_R_MIN: float = 0.1
 DEFAULT_R_MAX: float = 0.3

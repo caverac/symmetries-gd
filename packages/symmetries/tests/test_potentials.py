@@ -5,7 +5,14 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 from symmetries._types import PotentialConfig
-from symmetries.potentials import build_axisymmetric, build_bar, build_composite, build_kepler, build_plummer
+from symmetries.potentials import (
+    build_axisymmetric,
+    build_bar,
+    build_composite,
+    build_disk,
+    build_kepler,
+    build_plummer,
+)
 
 
 class TestBuildKepler:
@@ -74,36 +81,59 @@ class TestBuildBar:
         assert result is mock_db.return_value
 
 
+class TestBuildDisk:
+    """Tests for Miyamoto-Nagai disk potential builder."""
+
+    @patch("symmetries.potentials.MiyamotoNagaiPotential")
+    def test_calls_with_params(self, mock_mn: MagicMock) -> None:
+        """Verify MiyamotoNagaiPotential is called with configured disk parameters."""
+        config = PotentialConfig(disk_mass=0.5, disk_a=3.0, disk_b=0.2)
+        build_disk(config)
+        mock_mn.assert_called_once_with(amp=0.5, a=3.0, b=0.2)
+
+    @patch("symmetries.potentials.MiyamotoNagaiPotential")
+    def test_returns_instance(self, mock_mn: MagicMock) -> None:
+        """Verify build_disk returns the MiyamotoNagaiPotential instance."""
+        config = PotentialConfig()
+        result = build_disk(config)
+        assert result is mock_mn.return_value
+
+
 class TestBuildAxiSymmetric:
     """Tests for axisymmetric potential builder."""
 
+    @patch("symmetries.potentials.MiyamotoNagaiPotential")
     @patch("symmetries.potentials.PlummerPotential")
     @patch("symmetries.potentials.KeplerPotential")
-    def test_returns_two_components(self, mock_kp: MagicMock, mock_pp: MagicMock) -> None:
-        """Verify axisymmetric returns only Kepler and Plummer."""
+    def test_returns_three_components(self, mock_kp: MagicMock, mock_pp: MagicMock, mock_mn: MagicMock) -> None:
+        """Verify axisymmetric returns Kepler, Plummer, and disk."""
         config = PotentialConfig()
         result = build_axisymmetric(config)
-        assert len(result) == 2
+        assert len(result) == 3
         assert result[0] is mock_kp.return_value
         assert result[1] is mock_pp.return_value
+        assert result[2] is mock_mn.return_value
 
 
 class TestBuildComposite:
     """Tests for composite potential builder."""
 
     @patch("symmetries.potentials.DehnenBarPotential")
+    @patch("symmetries.potentials.MiyamotoNagaiPotential")
     @patch("symmetries.potentials.PlummerPotential")
     @patch("symmetries.potentials.KeplerPotential")
-    def test_returns_three_components(
+    def test_returns_four_components(
         self,
         mock_kp: MagicMock,
         mock_pp: MagicMock,
+        mock_mn: MagicMock,
         mock_db: MagicMock,
     ) -> None:
-        """Verify composite returns Kepler, Plummer, and bar components."""
+        """Verify composite returns Kepler, Plummer, disk, and bar components."""
         config = PotentialConfig()
         result = build_composite(config)
-        assert len(result) == 3
+        assert len(result) == 4
         assert result[0] is mock_kp.return_value
         assert result[1] is mock_pp.return_value
-        assert result[2] is mock_db.return_value
+        assert result[2] is mock_mn.return_value
+        assert result[3] is mock_db.return_value

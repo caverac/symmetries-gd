@@ -12,6 +12,7 @@ from symmetries.tensors import (
     kepler_energy,
     lrl_tensor,
     lrl_vector,
+    path_tensor,
     phi_function,
     psi_function,
     sigmoid,
@@ -424,3 +425,45 @@ class TestHarmonicCasimir:
         vel = np.ones((5, 3))
         result = harmonic_casimir(pos, vel, omega=1.0, mass=1.0)
         assert result.shape == (5,)
+
+
+class TestPathTensor:
+    """Tests for the Lie-algebra path tensor interpolation."""
+
+    def test_shape(self) -> None:
+        """Verify single phase point returns a 3x3 tensor."""
+        pos = np.array([1.0, 0.0, 0.0])
+        vel = np.array([0.0, 1.0, 0.0])
+        result = path_tensor(pos, vel, r_core=1.0, mu=1.0, omega=1.0)
+        assert result.shape == (3, 3)
+
+    def test_symmetric(self) -> None:
+        """Verify path tensor is symmetric for random input."""
+        rng = np.random.default_rng(55)
+        pos = rng.standard_normal(3)
+        vel = rng.standard_normal(3)
+        result = path_tensor(pos, vel, r_core=1.0, mu=1.0, omega=1.0)
+        np.testing.assert_allclose(result, result.T, atol=1e-12)
+
+    def test_batch(self) -> None:
+        """Verify batch path tensor returns correct shape."""
+        pos = np.ones((3, 4, 3))
+        vel = np.ones((3, 4, 3))
+        result = path_tensor(pos, vel, r_core=1.0, mu=1.0, omega=1.0)
+        assert result.shape == (3, 4, 3, 3)
+
+    def test_finite(self) -> None:
+        """Verify path tensor values are finite for random input."""
+        rng = np.random.default_rng(66)
+        pos = rng.standard_normal((10, 3))
+        vel = rng.standard_normal((10, 3))
+        result = path_tensor(pos, vel, r_core=0.5, mu=1.0, omega=2.0)
+        assert np.all(np.isfinite(result))
+
+    def test_zero_omega_uses_kepler_only(self) -> None:
+        """With omega=0, harmonic term vanishes and only Kepler term remains."""
+        pos = np.array([1.0, 0.5, 0.0])
+        vel = np.array([0.3, 0.7, 0.1])
+        result = path_tensor(pos, vel, r_core=1.0, mu=1.0, omega=0.0)
+        assert result.shape == (3, 3)
+        assert np.all(np.isfinite(result))

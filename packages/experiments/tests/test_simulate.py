@@ -60,7 +60,7 @@ class TestSimulate:
 
     @patch("experiments.commands.simulate.compare_variances")
     @patch("experiments.commands.simulate.compute_invariants")
-    def test_help(self, mock_compute: MagicMock, mock_compare: MagicMock) -> None:
+    def test_help(self, _mock_compute: MagicMock, _mock_compare: MagicMock) -> None:
         """Verify --help exits cleanly and lists expected options."""
         runner = CliRunner()
         result = runner.invoke(simulate, ["--help"])

@@ -47,19 +47,12 @@ disable = [
     "too-many-positional-arguments",
     "too-many-instance-attributes",
     "too-many-locals",
-    "import-error",
-    "missing-class-docstring",
-    "missing-function-docstring",
-    "unused-variable",
-    "unused-argument",
-    "import-outside-toplevel",
     "duplicate-code",
+    "import-outside-toplevel",
 ]
 
 [tool.pydocstyle]
 convention = "numpy"
-match = "(?!test_).*\\.py"
-match-dir = "(?!tests).*"
 
 [tool.mypy]
 strict = true

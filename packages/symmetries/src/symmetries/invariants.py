@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-from symmetries.tensors import angular_momentum_squared, phi_function, psi_function
+from symmetries.tensors import angular_momentum_squared, sigmoid
 
 
 def compute_c2(
@@ -18,15 +18,20 @@ def compute_c2(
     mu: float,
     plummer_mass: float,
     plummer_scale: float,
+    disk_mass: float = 0.0,  # pylint: disable=unused-argument
+    disk_a: float = 0.0,
     mass: float = 1.0,
 ) -> NDArray[np.floating]:
-    r"""Compute the deformed Casimir invariant.
+    r"""Compute the Algebraic-Geometric Casimir.
 
-    Uses the parameterized Lie Algebra deformation operator:
-    Q_ij = p_i p_j / (2m) + Psi(r) x_i x_j + Phi(r) delta_ij
+    This invariant represents the Staeckel action calculated in a
+    coordinate system whose focal distance Delta(r) deforms along the
+    Lie Algebra contraction path.
 
-    The Casimir is C2 = alpha L^2 + beta Tr(Q_tilde^2)
-    where Q_tilde is the traceless part of Q.
+    The path moves through three regimes:
+    1. Spherical Core (Delta ~ 0)
+    2. Ellipsoidal Bulge (Delta ~ plummer_scale)
+    3. Flattened Disk (Delta ~ disk_a)
 
     Parameters
     ----------
@@ -40,49 +45,36 @@ def compute_c2(
         Mass of the Plummer bulge.
     plummer_scale : float
         Scale radius of the Plummer sphere.
+    disk_mass : float
+        Mass of the galactic disk.
+    disk_a : float
+        Scale length of the disk.
     mass : float
         Particle mass.
 
     Returns
     -------
     NDArray
-        Deformed Casimir, shape ``(...)``.
+        Deformed Geometric Casimir, shape ``(...)``.
     """
-    # 1. Scaling parameters
-    r_core = (mu * plummer_scale / (plummer_mass + 1e-30)) if plummer_mass > 0 else 1e30
-    omega = np.sqrt(plummer_mass / (plummer_scale**3 + 1e-30))
-
-    # 2. Base components
+    # 1. Base components
     l_sq = angular_momentum_squared(pos, vel)
     r = np.sqrt(np.sum(pos**2, axis=-1))
+    pz = mass * vel[..., 2]
 
-    # 3. Structural functions Psi and Phi
-    # Psi(r) interpolates force-gradient: mu/r^3 -> omega^2
-    # Phi(r) interpolates potential shift: -mu/r -> 0
-    psi = psi_function(r, r_core, mu, omega)
-    phi = phi_function(r, r_core, mu)
+    # 2. Scaling parameters
+    r_core = (mu * plummer_scale / (plummer_mass + 1e-30)) if plummer_mass > 0 else 1e30
+    # The disk transition happens further out
+    r_disk = disk_a if disk_a > 0 else 1e30
 
-    # 4. Construct Symmetry Operator Q_ij
-    # Q_ij = p_i p_j / (2m) + (Psi/2) x_i x_j + Phi delta_ij
-    # (Virial factor 1/2 on Psi ensures Q -> T_Fradkin in Harmonic limit)
-    mom = mass * vel
-    kinetic = np.einsum("...i,...j->...ij", mom, mom) / (2.0 * mass)
-    pos_outer = np.einsum("...i,...j->...ij", pos, pos)
-    potential = (psi / 2.0)[..., np.newaxis, np.newaxis] * pos_outer
+    # 3. Multi-Stage Dynamic Focal Distance Delta(r)
+    # Stage 1: Kepler -> Bulge
+    sig_bulge = sigmoid(r, r_core)
+    # Stage 2: Bulge -> Disk
+    sig_disk = sigmoid(r, r_disk)
 
-    identity = np.eye(3)
-    offset = phi[..., np.newaxis, np.newaxis] * identity
+    # Delta deforms from 0 -> plummer_scale -> disk_a
+    delta_eff = (1.0 - sig_disk) * (sig_bulge * plummer_scale) + sig_disk * disk_a
 
-    q_tensor = kinetic + potential + offset
-
-    # 5. Extract Traceless Casimir Component
-    tr_q = np.einsum("...ii->...", q_tensor)
-    q_tilde = q_tensor - (tr_q[..., np.newaxis, np.newaxis] / 3.0) * identity
-    tr_q_tilde_sq = np.einsum("...ij,...ji->...", q_tilde, q_tilde)
-
-    # 6. Final Casimir sum: C2 = L^2 + Tr(Q_tilde^2) / omega_eff^2
-    # In the transition, we must scale the trace term to match units of L^2.
-    # The effective frequency omega_eff(r) = sqrt(Psi(r)).
-    omega_eff_sq = np.maximum(psi, 1e-30)
-
-    return l_sq + tr_q_tilde_sq / omega_eff_sq  # type: ignore[no-any-return]
+    # 4. Deformed Casimir: C2 = L^2 + Delta^2 * pz^2
+    return l_sq + (delta_eff**2) * (pz**2)  # type: ignore[no-any-return]

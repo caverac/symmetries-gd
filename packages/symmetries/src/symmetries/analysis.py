@@ -67,7 +67,7 @@ def compute_invariants(
     vz: NDArray[np.floating],
     phi: NDArray[np.floating],
     times: NDArray[np.floating],
-    delta: float = 0.5,
+    delta: float = 0.5,  # pylint: disable=unused-argument
 ) -> InvariantResult:
     """Run the full analysis pipeline.
 
@@ -90,16 +90,33 @@ def compute_invariants(
     times : NDArray
         Integration time array, shape ``(n_times,)``.
     delta : float
-        Focal length for the Staeckel approximation.
+        Base focal length (not used if dynamic delta is enabled).
 
     Returns
     -------
     InvariantResult
         Combined C_2 and J_R values for all particles and times.
     """
+    from symmetries.tensors import sigmoid
+
     potential = build_composite(config)
     axisymmetric = build_axisymmetric(config)
     phase = integrate_orbits(r_cyl, vr, vt, z, vz, phi, potential, times)
+
+    # Calculate r_core for sigmoid (SMBH -> Bulge)
+    r_core = config.smbh_mass * config.plummer_scale / (config.plummer_mass + 1e-30)
+    # Calculate r_disk for second stage (Bulge -> Disk)
+    r_disk = config.disk_a
+
+    # Compute dynamic delta: 0.01 (Kepler) -> plummer_scale (Bulge) -> disk_a (Disk)
+    r = np.sqrt(np.sum(phase.pos**2, axis=-1))
+    sig_bulge = sigmoid(r, r_core)
+    sig_disk = sigmoid(r, r_disk)
+
+    # Dynamic delta for Staeckel calculation
+    dynamic_delta = (1.0 - sig_disk) * (sig_bulge * config.plummer_scale) + sig_disk * config.disk_a
+    # Ensure a small floor for Kepler limit
+    dynamic_delta = np.maximum(dynamic_delta, 0.01)
 
     c2 = compute_c2(
         phase.pos,
@@ -107,8 +124,10 @@ def compute_invariants(
         mu=config.smbh_mass,
         plummer_mass=config.plummer_mass,
         plummer_scale=config.plummer_scale,
+        disk_mass=config.disk_mass,
+        disk_a=config.disk_a,
     )
-    jr = compute_actions(phase, axisymmetric, delta=delta)
+    jr, _lz, _jz = compute_actions(phase, axisymmetric, delta=dynamic_delta)
 
     return InvariantResult(c2=c2, jr=jr, time=times, phase=phase)
 

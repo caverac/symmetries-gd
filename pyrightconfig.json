@@ -1,0 +1,3 @@
+{
+  "extraPaths": ["packages/experiments/src", "packages/symmetries/src"]
+}
