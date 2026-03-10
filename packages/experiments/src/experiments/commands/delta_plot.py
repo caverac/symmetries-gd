@@ -68,7 +68,6 @@ def _build_figure(
 
         ax.set_xlabel(r"$R$ (kpc)")
         ax.set_ylabel(r"$\Delta(R)$ (kpc)")
-        ax.set_xscale("log")
         configure_axes(ax)
 
     return fig

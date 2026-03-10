@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Action stability during migration
 
-The [algebraic framework](../concepts/lie-groups) predicts that the vertical action $J_z$ -- as the deformed Casimir of the $\mathfrak{so}(3) \to \mathfrak{so}(2)$ symmetry breaking -- should be conserved during bar-driven radial migration, even as the radial action $J_R$ changes dramatically. This page presents the numerical evidence.
+The vertical action $J_z$ is robustly conserved during radial migration, even as the radial action $J_R$ and angular momentum $L_z$ change dramatically. This page presents the numerical evidence for this conservation and explains its radial dependence.
 
 ## The key result
 
@@ -30,26 +30,18 @@ The median values across the full ensemble (2000 particles):
 | $\sigma(J_R) / \|L_{z,0}\|$ | $8.6 \times 10^{-2}$ |
 | Ratio                       | $2.0 \times 10^{-2}$ |
 
-**Across the full ensemble, $J_z$ is conserved $\sim$50 times better than $J_R$.** The protection is strongly radially dependent: for outer-disk particles ($R_g > 7$ kpc), the ratio drops to $4.6 \times 10^{-4}$, meaning $J_z$ is conserved **$\sim$2200 times** better than $J_R$. In the inner disk ($R_g < 3$ kpc), where the bar dominates and the Staeckel deformation parameter $\Delta$ is small, the protection is weaker ($\sim$2x).
+**Across the full ensemble, $J_z$ is conserved $\sim$50 times better than $J_R$.**
 
-This radial dependence is consistent with the algebraic framework: the deformed Casimir $J_z$ is defined in coordinates set by $\Delta(R)$, and the protection is strongest where $\Delta$ is large -- i.e., in the outer disk where flattening dominates. The most strongly migrated particles ($|\Delta R_g| \sim 4\text{--}9$ kpc) still show $\sigma(J_z) \approx 0$, confirming that the bar perturbation acts within $SO(2)$ and cannot change the deformed Casimir in the regime where the deformation is significant.
+## Radial Dependence of Conservation
 
-## Migration driven by the bar
+The protection of $J_z$ is strongly radially dependent. For outer-disk particles ($R_g > 7$ kpc), the ratio drops to $4.6 \times 10^{-4}$, meaning $J_z$ is conserved **$\sim$2200 times** better than $J_R$. In the inner disk ($R_g < 3$ kpc), where the potential is nearly spherical and the bar is most non-axisymmetric, the conservation is much weaker ($\sim$2x).
 
-<figure className="scientific scientific--narrow">
-  <img
-    src="/img/migration-scatter.png"
-    alt="Migration scatter plot"
-  />
-  <figcaption>
-    <strong>Figure 2.</strong> Fractional change in guiding radius
-    $\ln(R_g / R_{{g,0}})$ versus initial guiding radius. The dashed
-    line marks the bar's corotation radius $R_{{\mathrm{{CR}}}} \approx 5.5$ kpc.
-    Particles near corotation undergo the strongest migration, with
-    $\ln(R_g / R_{{g,0}})$ reaching $-6$ for inward scattering. The bar
-    drives substantial radial reshuffling across the entire disk.
-  </figcaption>
-</figure>
+This radial dependence confirms the **adiabatic** nature of the conservation:
+
+1. **Outer Disk:** The vertical oscillation frequency $\nu_z$ is much higher than the orbital frequencies. According to **adiabatic theory**, $J_z$ should be highly conserved in this regime.
+2. **Inner Disk:** The potential is more spherical, frequencies are comparable, and the separation of timescales breaks down. Here, $J_z$ (which reduces to the $L^2$ Casimir) is less protected from the bar's torques.
+
+The algebraic framework provides the **geometric context** for this result. By adapting the action definition to the local potential (via $\Delta(R)$), we ensure that the measured "vertical" action is the true adiabatic invariant of the system as the star migrates.
 
 ## Staeckel convergence
 
@@ -57,25 +49,4 @@ galpy's `actionAngleStaeckel` returns a sentinel value (9999.99) when the Staeck
 
 ## Limitations
 
-The simulation uses a smooth, collisionless potential. In realistic galaxies, giant molecular clouds and other dense gas structures provide an additional source of vertical scattering that operates outside the $SO(2)$ subalgebra. Recent work using MHD simulations with gas dynamics found that GMC scattering can drive vertical action evolution on timescales comparable to or shorter than radial action evolution ([Arora et al. 2025](https://doi.org/10.1093/mnras/stae2707)). The algebraic protection demonstrated here applies specifically to planar perturbations -- the bar being the primary example -- and does not preclude vertical heating from non-planar sources.
-
-## Simulation details
-
-- **Potential**: Hernquist bulge ($a_b = 0.5$ kpc) + Miyamoto-Nagai disk ($a_d = 3$ kpc, $b_d = 0.28$ kpc) + NFW halo ($a_h = 16$ kpc) + Dehnen bar ($r_b = 4$ kpc, $\Omega_b = 40$ km/s/kpc)
-- **Bar growth**: 0 to full strength over $\sim$1 Gyr
-- **Note on bar parameters**: Gaia-era measurements place the present-day MW bar pattern speed at $\sim$33--41 km/s/kpc ([see model details](../concepts/connection#the-galactic-model)). Our $\Omega_b = 40$ km/s/kpc is within this range.
-- **Integration time**: $\sim$10 Gyr (approximately one Hubble time)
-- **Particles**: 2000 (1000 center + 1000 disk population)
-- **Snapshots**: 50 evenly spaced
-- **Actions**: computed via `actionAngleStaeckel` with $\Delta$ set to the median of the analytically-derived $\Delta(R)$ from the Miyamoto-Nagai separability condition
-
-## Reproducing the figures
-
-```bash
-# Run the simulation
-uv run experiments simulate --name mw --n-particles 1000 --force
-
-# Generate the figures
-uv run experiments action-scatter --name mw
-uv run experiments migration-scatter --name mw
-```
+The simulation uses a smooth, collisionless potential. In realistic galaxies, giant molecular clouds and other dense gas structures provide a non-planar perturbation channel that operates on shorter timescales than the bar. This mechanism can drive vertical heating that bypasses the adiabatic protection. [Arora et al. (2025)](https://doi.org/10.1093/mnras/stae2707) found that in MHD simulations with gas dynamics, vertical actions evolve through GMC encounters even when planar migration is weak.

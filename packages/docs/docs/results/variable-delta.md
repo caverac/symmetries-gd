@@ -25,11 +25,11 @@ The three panels tell the story of bar-driven migration at the level of a single
 
 - **Top panel ($R_g$).** The guiding radius tracks how far each star migrates. The outward migrator gains several kpc; the inward migrator loses a comparable amount. The non-migrating star stays near its birth radius throughout.
 
-- **Middle panel ($J_z$).** The vertical action remains flat for all three particles, regardless of whether and how far they migrate. This is the signature of a conserved quantity -- the deformed Casimir of the $\mathfrak{so}(3) \to \mathfrak{so}(2)$ symmetry breaking.
+- **Middle panel ($J_z$).** The vertical action remains flat for all three particles, regardless of whether and how far they migrate. This is the signature of a robustly conserved quantity -- defined as the deformed Casimir of the $\mathfrak{so}(3) \to \mathfrak{so}(2)$ symmetry breaking, it adapts to the local potential at every radius.
 
-- **Bottom panel ($J_R$).** The radial action fluctuates strongly once the bar reaches full strength. The bar perturbation pumps energy into the radial degree of freedom, and $J_R$ tracks this pumping in real time.
+- **Bottom panel ($J_R$).** The radial action fluctuates strongly once the bar reaches full strength. The bar perturbation exerts torques that reshuffle the radial orbits, and $J_R$ tracks this energy exchange in real time.
 
-The contrast between the middle and bottom panels is the central result: the bar acts within $SO(2)$ and drives large changes in $J_R$, but the Casimir $J_z$ is algebraically immune to planar perturbations. This holds not just on average (as shown in the [ensemble scatter](staeckel-potential)), but snapshot by snapshot for each individual orbit.
+The contrast between the middle and bottom panels is the central result: while the bar breaks axial symmetry to drive large changes in $J_R$, the vertical action $J_z$ is protected by the separation of timescales (adiabaticity) and the planar nature of the perturbation. This holds not just on average (as shown in the [ensemble scatter](staeckel-potential)), but snapshot by snapshot for each individual orbit.
 
 ## The role of $\Delta(R)$
 

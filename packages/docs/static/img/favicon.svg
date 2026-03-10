@@ -1,28 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <!-- Gradient from Kepler-blue to Harmonic-gold -->
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#1a3a6b"/>
       <stop offset="100%" stop-color="#d4a520"/>
     </linearGradient>
+    <style>
+      text { font-family: 'Georgia', 'Times New Roman', serif; }
+    </style>
   </defs>
 
-  <!-- Outer circle: SO(4) symmetry -->
-  <circle cx="50" cy="50" r="44" fill="none" stroke="url(#g)" stroke-width="4"/>
+  <!-- Background: rounded square -->
+  <rect x="4" y="4" width="92" height="92" rx="18" ry="18"
+        fill="#0d1b2a" stroke="url(#g)" stroke-width="3"/>
 
-  <!-- Inner circle: SU(3) core -->
-  <circle cx="50" cy="50" r="20" fill="none" stroke="url(#g)" stroke-width="3"/>
+  <!-- Lie bracket: [ , ] -->
+  <text x="10" y="62" font-size="52" font-weight="bold" fill="url(#g)"
+        font-style="italic">[</text>
+  <text x="72" y="62" font-size="52" font-weight="bold" fill="url(#g)"
+        font-style="italic">]</text>
 
-  <!-- Three-fold rotation axes: SU(3) generators -->
-  <line x1="50" y1="6"  x2="50" y2="94" stroke="url(#g)" stroke-width="2" opacity="0.5"/>
-  <line x1="11.8" y1="72" x2="88.2" y2="28" stroke="url(#g)" stroke-width="2" opacity="0.5"/>
-  <line x1="11.8" y1="28" x2="88.2" y2="72" stroke="url(#g)" stroke-width="2" opacity="0.5"/>
+  <!-- Generators L1, L2 inside the bracket -->
+  <text x="28" y="55" font-size="18" fill="#7eb8da"
+        font-style="italic">L</text>
+  <text x="42" y="60" font-size="11" fill="#7eb8da">1</text>
+  <text x="49" y="55" font-size="16" fill="#8a8a8a">,</text>
+  <text x="55" y="55" font-size="18" fill="#d4a520"
+        font-style="italic">L</text>
+  <text x="69" y="60" font-size="11" fill="#d4a520">2</text>
 
-  <!-- Six vertices: deformation nodes -->
-  <circle cx="50" cy="6"  r="4" fill="#1a3a6b"/>
-  <circle cx="50" cy="94" r="4" fill="#d4a520"/>
-  <circle cx="11.8" cy="72" r="4" fill="#1a3a6b"/>
-  <circle cx="88.2" cy="28" r="4" fill="#d4a520"/>
-  <circle cx="11.8" cy="28" r="4" fill="#1a3a6b"/>
-  <circle cx="88.2" cy="72" r="4" fill="#d4a520"/>
+  <!-- Deformation arrow: so(3) -> so(2) below -->
+  <text x="12" y="82" font-size="12" fill="#5a7a9a"
+        font-style="italic">so</text>
+  <text x="27" y="82" font-size="10" fill="#5a7a9a">(3)</text>
+
+  <!-- Arrow -->
+  <line x1="40" y1="78" x2="56" y2="78" stroke="#8a8a8a" stroke-width="1.5"/>
+  <polygon points="56,75 62,78 56,81" fill="#8a8a8a"/>
+
+  <!-- so(2) -->
+  <text x="64" y="82" font-size="12" fill="#d4a520"
+        font-style="italic">so</text>
+  <text x="79" y="82" font-size="10" fill="#d4a520">(2)</text>
 </svg>
