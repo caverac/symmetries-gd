@@ -1,14 +1,14 @@
 """Orbit integration and action computation via galpy.
 
-This is one of only two modules that import galpy.  It accepts cylindrical
-initial conditions, integrates orbits, extracts Cartesian phase-space
-coordinates, and computes actions.
+Accepts cylindrical initial conditions, integrates orbits, extracts
+Cartesian phase-space coordinates, and computes actions using the
+Staeckel Fudge with a position-dependent focal distance.
 """
 
 from __future__ import annotations
 
 import numpy as np
-from galpy.actionAngle import actionAngleIsochroneApprox
+from galpy.actionAngle import actionAngleStaeckel
 from galpy.orbit import Orbit
 from galpy.potential import vcirc
 from numpy.typing import NDArray
@@ -119,9 +119,9 @@ def integrate_orbits(
 def compute_actions(
     phase: PhasePoint,
     potential: list[GalpyPotential],
-    delta: float | NDArray[np.floating] = 0.5,  # noqa: ARG001  # pylint: disable=unused-argument
+    delta: float | NDArray[np.floating] = 0.5,
 ) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
-    """Compute the actions (J_R, L_z, J_z) using Isochrone Approximation.
+    """Compute the actions (J_R, L_z, J_z) using the Staeckel Fudge.
 
     Parameters
     ----------
@@ -129,24 +129,33 @@ def compute_actions(
         Phase-space data with shape ``(n_particles, n_times, 3)``.
     potential : list[GalpyPotential]
         Galpy potential list.
-    delta : float or NDArray
-        Not used by IsochroneApprox, but kept for signature compatibility.
+    delta : float | NDArray
+        Focal distance for the Staeckel approximation.  A scalar uses the
+        same value everywhere; an array of shape ``(n_particles, n_times)``
+        uses a per-point focal distance derived from the local radius.
 
     Returns
     -------
     tuple
         ``(jr, lz, jz)`` action values, each with shape ``(n_particles, n_times)``.
     """
+    import time as _time
+
     n_particles, n_times, _ = phase.pos.shape
     jr_out = np.zeros((n_particles, n_times))
     lz_out = np.zeros((n_particles, n_times))
     jz_out = np.zeros((n_particles, n_times))
 
-    # Initialize Action Finder
-    aa = actionAngleIsochroneApprox(pot=potential, b=0.8)  # Characteristic scale
+    scalar_delta = np.ndim(delta) == 0
+    scalar_aa = actionAngleStaeckel(pot=potential, delta=float(delta)) if scalar_delta else None
 
     for i in range(n_particles):
+        t0 = _time.perf_counter()
         for t in range(n_times):
+            if scalar_aa is not None:
+                aa = scalar_aa
+            else:
+                aa = actionAngleStaeckel(pot=potential, delta=float(delta[i, t]))  # type: ignore[index]
             pos_t = phase.pos[i, t]
             vel_t = phase.vel[i, t]
             r_cyl, v_r, v_t, z_val, vz_val, phi = cartesian_to_cylindrical(pos_t, vel_t)
@@ -155,6 +164,8 @@ def compute_actions(
             jr_out[i, t] = np.asarray(jr_val).flat[0]
             lz_out[i, t] = np.asarray(lz_val).flat[0]
             jz_out[i, t] = np.asarray(jz_val).flat[0]
+        elapsed = _time.perf_counter() - t0
+        print(f"  Actions particle {i + 1}/{n_particles}: {n_times} snapshots in {elapsed:.2f}s")
 
     return jr_out, lz_out, jz_out
 

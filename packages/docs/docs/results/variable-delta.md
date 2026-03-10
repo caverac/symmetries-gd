@@ -2,47 +2,37 @@
 sidebar_position: 2
 ---
 
-# The dynamic focal distance
+# Migration traces
 
-The [Osculating Casimir](staeckel-potential) requires a focal distance $\Delta(r)$ that adapts to the local symmetry of the potential. This page describes how $\Delta$ is constructed and what it means physically.
+The [action scatter plot](staeckel-potential) showed that $J_z$ is conserved across the entire particle ensemble. This page follows **individual stars** through time, making the conservation visible as a direct time series.
 
-## Ellipsoidal coordinates and $\Delta$
+## Three representative orbits
 
-In Staeckel potential theory, orbits are described in **prolate spheroidal coordinates** $(\lambda, \nu, \phi)$ parameterized by a focal distance $\Delta$. When $\Delta = 0$, the coordinates reduce to spherical; as $\Delta$ grows, the coordinate surfaces stretch into ellipsoids.
+<figure className="scientific scientific--narrow">
+  <img
+    src="/img/migration-traces.png"
+    alt="Time traces of guiding radius, vertical action, and radial action for three particles"
+  />
+  <figcaption>
+    <strong>Figure 1.</strong> Time evolution of $R_g$, $J_z$, and $J_R$ for three
+    representative particles: a non-migrating star (black), an outward migrator (red),
+    and an inward migrator (blue). The bar grows to full strength over the first
+    $\sim$1 Gyr and drives migration through corotation resonance.
+  </figcaption>
+</figure>
 
-The focal distance determines the shape of the coordinate system -- and therefore which third integral $I_3 = L^2 + \Delta^2 p_z^2$ is conserved. For a given axisymmetric potential, there exists an optimal $\Delta$ that minimizes the deviation from Staeckel form.
+The three panels tell the story of bar-driven migration at the level of a single orbit:
 
-## The multi-stage path
+- **Top panel ($R_g$).** The guiding radius tracks how far each star migrates. The outward migrator gains several kpc; the inward migrator loses a comparable amount. The non-migrating star stays near its birth radius throughout.
 
-A migrating star passes through three gravitational regimes, each with a different natural coordinate geometry:
+- **Middle panel ($J_z$).** The vertical action remains flat for all three particles, regardless of whether and how far they migrate. This is the signature of a conserved quantity -- the deformed Casimir of the $\mathfrak{so}(3) \to \mathfrak{so}(2)$ symmetry breaking.
 
-| Regime                | Radius                    | Symmetry         | $\Delta$                   |
-| --------------------- | ------------------------- | ---------------- | -------------------------- |
-| **Spherical core**    | $r \ll r_{\text{core}}$   | Kepler / SO(4)   | $\approx 0$                |
-| **Ellipsoidal bulge** | $r \sim r_{\text{bulge}}$ | Harmonic / SU(3) | $\approx a_{\text{bulge}}$ |
-| **Flattened disk**    | $r \sim r_{\text{disk}}$  | Disk dynamics    | $\approx a_{\text{disk}}$  |
+- **Bottom panel ($J_R$).** The radial action fluctuates strongly once the bar reaches full strength. The bar perturbation pumps energy into the radial degree of freedom, and $J_R$ tracks this pumping in real time.
 
-The implementation uses a two-stage sigmoid interpolation to smoothly connect these regimes:
+The contrast between the middle and bottom panels is the central result: the bar acts within $SO(2)$ and drives large changes in $J_R$, but the Casimir $J_z$ is algebraically immune to planar perturbations. This holds not just on average (as shown in the [ensemble scatter](staeckel-potential)), but snapshot by snapshot for each individual orbit.
 
-$$
-\Delta(r) = \bigl(1 - \sigma_{\text{disk}}(r)\bigr)\,\sigma_{\text{bulge}}(r)\, a_{\text{bulge}} + \sigma_{\text{disk}}(r)\, a_{\text{disk}}
-$$
+## The role of $\Delta(R)$
 
-where each sigmoid is centered at the corresponding scale radius:
+A migrating star crosses regions with different local geometry. In the [concepts section](../concepts/connection#why-deltar-and-not-a-constant) we showed that the Staeckel focal distance $\Delta(R)$ -- the deformation parameter -- varies smoothly from $\sim$3 kpc in the inner galaxy to $\sim$8 kpc at $R \sim 10$ kpc. Yet $J_z$ remains constant throughout.
 
-$$
-\sigma(r) = \frac{1}{1 + e^{-4(r/r_{\text{scale}} - 1)}}
-$$
-
-The bulge transition scale $r_{\text{core}}$ is set by the SMBH sphere of influence: $r_{\text{core}} = \mu\, a_{\text{bulge}} / M_{\text{bulge}}$, where $\mu$ is the SMBH gravitational parameter.
-
-## The key insight
-
-The Lie algebra deformation parameter $\lambda$ and the Staeckel focal distance $\Delta$ are not merely analogous -- they are the **same quantity** viewed from different mathematical perspectives:
-
-- **Algebraically**: $\lambda$ parameterizes the contraction $\mathfrak{so}(4) \to \mathfrak{su}(3)$, tracking how the symmetry group deforms
-- **Geometrically**: $\Delta$ parameterizes the coordinate system, tracking how the orbital shape stretches from spherical to ellipsoidal
-
-By treating $\Delta$ as a dynamic, radius-dependent variable -- an **osculating focal length** -- we allow the coordinate system itself to deform along with the potential. This is why $C_2(r)$ remains stable where fixed-coordinate actions break down: it measures the orbit in the locally correct geometry at every point.
-
-The [experimental results](measuring-results) confirm this: during disk migration, the Osculating Casimir is 87 times more stable than the traditional radial action.
+This is not a coincidence. The continuity of $\Delta(R)$ ensures that the deformed Casimir adapts smoothly to the local symmetry as the star moves outward or inward. If $\Delta(R)$ had a discontinuity -- a sudden jump in the local coordinate geometry -- $J_z$ would not be preserved across it. The smooth variation of $\Delta(R)$ is what makes global $J_z$ conservation possible even when the local symmetry changes from nearly spherical ($SO(3)$) to strongly flattened ($SO(2)$). This smooth adaptation also explains why the Staeckel fudge converges reliably for $J_z$ across all particles and snapshots ([Sanders & Binney 2016](https://doi.org/10.1093/mnras/stw075)).

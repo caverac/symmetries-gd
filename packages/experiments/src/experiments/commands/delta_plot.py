@@ -1,85 +1,86 @@
-"""Generate a plot of the dynamic focal distance Delta(r)."""
+r"""Generate a plot of the Staeckel focal distance :math:`\Delta(R)`."""
 
 from __future__ import annotations
 
 import click
+import matplotlib.pyplot as plt
 import numpy as np
 from experiments._console import console
-from experiments._plotting import configure_axes, docs_figure
+from experiments._constants import R0_KPC
+from experiments._models import RunConfig
+from experiments._plotting import configure_axes, docs_figure, paper_style
 from matplotlib.figure import Figure
-from symmetries.tensors import sigmoid
+from numpy.typing import NDArray
+from symmetries.invariants import delta_miyamoto_nagai
 
 
 @docs_figure("delta-profile.png")
 def _build_figure(
-    radii: np.ndarray,
-    delta: np.ndarray,
-    r_core: float,
-    r_disk: float,
-    plummer_scale: float,
+    radii: NDArray[np.floating],
+    delta: NDArray[np.floating],
+    bulge_scale: float,
     disk_a: float,
 ) -> Figure:
-    r"""Build the Delta(r) profile figure.
+    r"""Build the :math:`\Delta(R)` profile figure.
 
     Parameters
     ----------
     radii : ndarray
-        Radial distances.
+        Radial distances in kpc.
     delta : ndarray
-        Dynamic focal distance at each radius.
-    r_core : float
-        SMBH influence radius (bulge transition scale).
-    r_disk : float
-        Disk transition scale.
-    plummer_scale : float
-        Plummer scale radius (bulge Delta plateau).
+        Staeckel focal distance at each radius in kpc.
+    bulge_scale : float
+        Hernquist bulge scale radius in kpc.
     disk_a : float
-        Disk scale length (disk Delta plateau).
+        Disk scale length in kpc.
 
     Returns
     -------
     Figure
         Matplotlib figure.
     """
-    import matplotlib.pyplot as plt
+    with plt.rc_context(paper_style()):
+        fig, ax = plt.subplots(figsize=(4.5, 4.0))
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
-    configure_axes(ax, log=True)
+        ax.plot(radii, delta, "-", color="black", lw=1.5)
 
-    ax.plot(radii, delta, "-", color="#1a1a1a", lw=2.0)
+        ax.axvline(bulge_scale, color="gray", ls="--", lw=0.8)
+        ax.axvline(disk_a, color="gray", ls="--", lw=0.8)
 
-    ax.axhline(plummer_scale, color="#5ba3cf", ls=":", lw=0.8, label=rf"$a_b = {plummer_scale}$")
-    ax.axhline(disk_a, color="#8bc34a", ls=":", lw=0.8, label=rf"$a_d = {disk_a}$")
-    ax.axvline(r_core, color="#888888", ls="--", lw=0.8, label=rf"$r_{{\mathrm{{core}}}} = {r_core:.2f}$")
-    ax.axvline(r_disk, color="#8bc34a", ls="--", lw=0.8, label=rf"$r_{{\mathrm{{disk}}}} = {r_disk}$")
+        ax.text(
+            bulge_scale,
+            0.02,
+            r"$a_b$",
+            va="bottom",
+            ha="right",
+            rotation=90,
+            transform=ax.get_xaxis_transform(),
+        )
+        ax.text(
+            disk_a,
+            0.02,
+            r"$a_d$",
+            va="bottom",
+            ha="right",
+            rotation=90,
+            transform=ax.get_xaxis_transform(),
+        )
 
-    ax.set_xlabel(r"$r$ (natural units)")
-    ax.set_ylabel(r"$\Delta(r)$")
-    ax.legend(frameon=False, fontsize=9)
+        ax.set_xlabel(r"$R$ (kpc)")
+        ax.set_ylabel(r"$\Delta(R)$ (kpc)")
+        ax.set_xscale("log")
+        configure_axes(ax)
 
     return fig
 
 
 @click.command("delta-plot")
-@click.option("--smbh-mass", type=float, default=0.1, show_default=True, help="SMBH mass (mu).")
-@click.option("--plummer-mass", type=float, default=0.4, show_default=True, help="Plummer mass.")
-@click.option("--plummer-scale", type=float, default=0.5, show_default=True, help="Plummer scale.")
-@click.option("--disk-a", type=float, default=3.0, show_default=True, help="Disk scale length.")
-def delta_plot(
-    smbh_mass: float,
-    plummer_mass: float,
-    plummer_scale: float,
-    disk_a: float,
-) -> None:
-    r"""Plot the dynamic focal distance Delta(r)."""
-    r_core = smbh_mass * plummer_scale / (plummer_mass + 1e-30) if plummer_mass > 0 else 1e30
-    r_disk = disk_a
+def delta_plot() -> None:
+    r"""Plot the Staeckel focal distance :math:`\Delta(R)`."""
+    config = RunConfig(name="_plot").to_potential_config()
 
-    radii = np.logspace(np.log10(0.01), np.log10(15.0), 500)
+    radii = np.logspace(np.log10(0.01), np.log10(10.0 / R0_KPC), 500)
+    delta = delta_miyamoto_nagai(radii, config.disk_a, config.disk_b)
 
-    sig_bulge = sigmoid(radii, r_core)
-    sig_disk = sigmoid(radii, r_disk)
-    delta = (1.0 - sig_disk) * (sig_bulge * plummer_scale) + sig_disk * disk_a
-
-    dest = _build_figure(radii, delta, r_core, r_disk, plummer_scale, disk_a)
-    console.print(f"Saved: {dest}")
+    _build_figure(radii * R0_KPC, delta * R0_KPC, config.bulge_scale * R0_KPC, config.disk_a * R0_KPC)
+    console.print("[green]Done.[/green]")

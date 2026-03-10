@@ -67,6 +67,7 @@ class TestSamplePopulation:
         pop = _make_population(n=n)
         mock_df = MagicMock()
         mock_df_cls.return_value = mock_df
+        mock_df.density.return_value = 1.0
         mock_df.sampleV.return_value = np.array([[0.1, 0.8, 0.05]])
 
         rng = np.random.default_rng(0)
@@ -86,6 +87,7 @@ class TestSamplePopulation:
         pop = _make_population(n=20)
         mock_df = MagicMock()
         mock_df_cls.return_value = mock_df
+        mock_df.density.return_value = 1.0
         mock_df.sampleV.return_value = np.array([[0.0, 1.0, 0.0]])
 
         rng = np.random.default_rng(42)
@@ -96,17 +98,20 @@ class TestSamplePopulation:
 
     @patch("symmetries.initial_conditions.quasiisothermaldf")
     @patch("symmetries.initial_conditions.actionAngleStaeckel")
-    def test_z_is_zero(self, _mock_aa: MagicMock, mock_df_cls: MagicMock) -> None:
-        """Verify z coordinates are initialized to zero."""
-        pop = _make_population(n=4)
+    def test_z_within_bounds(self, _mock_aa: MagicMock, mock_df_cls: MagicMock) -> None:
+        """Verify z coordinates are within [-z_max, z_max] and not all zero."""
+        pop = _make_population(n=10)
         mock_df = MagicMock()
         mock_df_cls.return_value = mock_df
+        # Accept all proposals so z is uniform in [-z_max, z_max]
+        mock_df.density.return_value = 1.0
         mock_df.sampleV.return_value = np.array([[0.0, 1.0, 0.0]])
 
         rng = np.random.default_rng(0)
         _, _, _, z, _, _ = sample_population(pop, [], rng)
 
-        np.testing.assert_array_equal(z, np.zeros(4))
+        assert np.all(np.abs(z) <= pop.z_max)
+        assert not np.allclose(z, 0.0)
 
     @patch("symmetries.initial_conditions.quasiisothermaldf")
     @patch("symmetries.initial_conditions.actionAngleStaeckel")
@@ -115,6 +120,7 @@ class TestSamplePopulation:
         pop = _make_population(n=2)
         mock_df = MagicMock()
         mock_df_cls.return_value = mock_df
+        mock_df.density.return_value = 1.0
         mock_df.sampleV.side_effect = [
             np.array([[0.1, 0.9, 0.02]]),
             np.array([[0.2, 0.8, 0.03]]),
@@ -139,6 +145,7 @@ class TestSampleInitialConditions:
         mock_build.return_value = []
         mock_df = MagicMock()
         mock_df_cls.return_value = mock_df
+        mock_df.density.return_value = 1.0
         mock_df.sampleV.return_value = np.array([[0.0, 1.0, 0.0]])
 
         pop1 = _make_population(n=3, label="a")
@@ -165,6 +172,7 @@ class TestSampleInitialConditions:
         mock_build.return_value = []
         mock_df = MagicMock()
         mock_df_cls.return_value = mock_df
+        mock_df.density.return_value = 1.0
         mock_df.sampleV.return_value = np.array([[0.0, 1.0, 0.0]])
 
         pop1 = _make_population(n=2, label="a")
@@ -186,10 +194,11 @@ class TestSampleInitialConditions:
         mock_build.return_value = [MagicMock()]
         mock_df = MagicMock()
         mock_df_cls.return_value = mock_df
+        mock_df.density.return_value = 1.0
         mock_df.sampleV.return_value = np.array([[0.0, 1.0, 0.0]])
 
         pop = _make_population(n=1)
-        pot_config = PotentialConfig(smbh_mass=0.2)
+        pot_config = PotentialConfig(bulge_mass=0.2)
         ic_config = InitialConditionsConfig(populations=(pop,), seed=0)
 
         sample_initial_conditions(ic_config, pot_config)

@@ -1,3 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <text y=".9em" font-size="90">S</text>
+  <defs>
+    <!-- Gradient from Kepler-blue to Harmonic-gold -->
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a3a6b"/>
+      <stop offset="100%" stop-color="#d4a520"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer circle: SO(4) symmetry -->
+  <circle cx="50" cy="50" r="44" fill="none" stroke="url(#g)" stroke-width="4"/>
+
+  <!-- Inner circle: SU(3) core -->
+  <circle cx="50" cy="50" r="20" fill="none" stroke="url(#g)" stroke-width="3"/>
+
+  <!-- Three-fold rotation axes: SU(3) generators -->
+  <line x1="50" y1="6"  x2="50" y2="94" stroke="url(#g)" stroke-width="2" opacity="0.5"/>
+  <line x1="11.8" y1="72" x2="88.2" y2="28" stroke="url(#g)" stroke-width="2" opacity="0.5"/>
+  <line x1="11.8" y1="28" x2="88.2" y2="72" stroke="url(#g)" stroke-width="2" opacity="0.5"/>
+
+  <!-- Six vertices: deformation nodes -->
+  <circle cx="50" cy="6"  r="4" fill="#1a3a6b"/>
+  <circle cx="50" cy="94" r="4" fill="#d4a520"/>
+  <circle cx="11.8" cy="72" r="4" fill="#1a3a6b"/>
+  <circle cx="88.2" cy="28" r="4" fill="#d4a520"/>
+  <circle cx="11.8" cy="28" r="4" fill="#1a3a6b"/>
+  <circle cx="88.2" cy="72" r="4" fill="#d4a520"/>
 </svg>

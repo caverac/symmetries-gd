@@ -63,4 +63,5 @@ yarn-error.log*
 *.pt
 *.pth
 *.fits
+*.db*
 .cache/

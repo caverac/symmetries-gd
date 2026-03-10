@@ -76,11 +76,11 @@ class SimulationDB:
             Foreign key referencing ``runs.id``.
         rows : list[tuple]
             Each tuple contains
-            ``(particle_idx, time, r, vr, vt, z, vz, phi, jr, lz, jz, c2, guiding_radius, label)``.
+            ``(particle_idx, time, r, vr, vt, z, vz, phi, jr, lz, jz, l_sq, guiding_radius, label)``.
         """
         self._conn.executemany(
             "INSERT INTO snapshots "
-            "(run_id, particle_idx, time, r, vr, vt, z, vz, phi, jr, lz, jz, c2, guiding_radius, label) "
+            "(run_id, particle_idx, time, r, vr, vt, z, vz, phi, jr, lz, jz, l_sq, guiding_radius, label) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [(run_id, *row) for row in rows],
         )
@@ -104,12 +104,13 @@ class SimulationDB:
                 t_end       REAL NOT NULL,
                 n_steps     INTEGER NOT NULL,
                 delta       REAL NOT NULL,
-                smbh_mass   REAL NOT NULL,
-                plummer_mass REAL NOT NULL,
-                plummer_scale REAL NOT NULL,
+                bulge_mass  REAL NOT NULL,
+                bulge_scale REAL NOT NULL,
                 disk_amp    REAL NOT NULL,
                 disk_a      REAL NOT NULL,
                 disk_b      REAL NOT NULL,
+                halo_amp    REAL NOT NULL,
+                halo_a      REAL NOT NULL,
                 bar_strength REAL NOT NULL,
                 bar_scale   REAL NOT NULL,
                 bar_tform   REAL NOT NULL,
@@ -148,7 +149,7 @@ class SimulationDB:
                 jr              REAL,
                 lz              REAL,
                 jz              REAL,
-                c2              REAL,
+                l_sq            REAL,
                 guiding_radius  REAL,
                 label           INTEGER NOT NULL
             );

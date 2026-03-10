@@ -72,6 +72,7 @@ def sample_population(
     """
     df = build_df(population, potential)
     n = population.n_particles
+    z_max = population.z_max
 
     r_cyl = rng.uniform(population.r_min, population.r_max, size=n)
     phi = rng.uniform(0, 2 * np.pi, size=n)
@@ -79,9 +80,18 @@ def sample_population(
     vr = np.empty(n)
     vt = np.empty(n)
     vz = np.empty(n)
-    z = np.zeros(n)
+    z = np.empty(n)
 
     for i in range(n):
+        # Rejection-sample z from the DF vertical density profile
+        rho_max = float(df.density(r_cyl[i], 0.0))
+        while True:
+            z_proposal = rng.uniform(-z_max, z_max)
+            rho = float(df.density(r_cyl[i], z_proposal))
+            if rng.uniform() < rho / max(rho_max, 1e-30):
+                break
+        z[i] = z_proposal
+
         vel_sample = df.sampleV(r_cyl[i], z[i], n=1)
         vr[i] = vel_sample[0, 0]
         vt[i] = vel_sample[0, 1]

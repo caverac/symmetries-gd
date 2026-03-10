@@ -21,7 +21,7 @@ class TestCLI:
         runner = CliRunner()
         result = runner.invoke(main, ["--help"])
         assert "simulate" in result.output
-        assert "variance-plot" in result.output
         assert "limit-test" in result.output
-        assert "stress-test" in result.output
-        assert "convergence" in result.output
+        assert "action-scatter" in result.output
+        assert "delta-plot" in result.output
+        assert "migration-plot" in result.output

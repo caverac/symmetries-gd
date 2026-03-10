@@ -18,15 +18,15 @@ class RunConfig(BaseModel):
     t_end : float
         Integration end time (natural units).
     n_steps : int
-        Number of integration time steps.
+        Number of evenly-spaced snapshot times in ``[0, t_end]``.
     delta : float
-        Staeckel delta parameter.
-    smbh_mass : float
-        SMBH Kepler potential amplitude.
-    plummer_mass : float
-        Plummer bulge amplitude.
-    plummer_scale : float
-        Plummer sphere scale radius.
+        Legacy Staeckel delta parameter (stored but not used for action
+        computation; the simulate command derives delta from the
+        Miyamoto-Nagai separability condition instead).
+    bulge_mass : float
+        Hernquist bulge amplitude.
+    bulge_scale : float
+        Hernquist sphere scale radius.
     disk_amp : float
         Miyamoto-Nagai disk amplitude.
     disk_a : float
@@ -80,42 +80,43 @@ class RunConfig(BaseModel):
     # Simulation
     name: str
     seed: int = 42
-    t_end: float = 500.0
-    n_steps: int = 2000
+    t_end: float = 300
+    n_steps: int = 50
     delta: float = 0.5
 
-    # Potential
-    smbh_mass: float = 1.0
-    plummer_mass: float = 0.4
-    plummer_scale: float = 0.5
-    disk_amp: float = 0.5
-    disk_a: float = 3.0
-    disk_b: float = 0.3
-    bar_strength: float = 0.0
-    bar_scale: float = 1.0
-    bar_tform: float = -100.0
-    bar_tsteady: float = 50.0
-    bar_pattern_speed: float = 0.3
+    # Potential (MW-like, galpy natural units: R0=8kpc, V0=220km/s)
+    bulge_mass: float = 0.17
+    bulge_scale: float = 0.0625
+    disk_amp: float = 0.9
+    disk_a: float = 0.375
+    disk_b: float = 0.035
+    halo_amp: float = 3.5
+    halo_a: float = 2.0
+    bar_strength: float = 0.15
+    bar_scale: float = 0.5
+    bar_tform: float = 0.0
+    bar_tsteady: float = 28.0
+    bar_pattern_speed: float = 1.45
 
-    # Center population
+    # Center population (inner disk, R ~ 0.2-0.5 = 1.6-4.0 kpc)
     center_n: int = 100
-    center_hr: float = 0.3
-    center_sr: float = 0.4
-    center_sz: float = 0.3
-    center_hsr: float = 0.8
-    center_hsz: float = 0.8
+    center_hr: float = 0.04
+    center_sr: float = 0.05
+    center_sz: float = 0.03
+    center_hsr: float = 0.5
+    center_hsz: float = 0.5
     center_r_min: float = 0.2
-    center_r_max: float = 0.8
+    center_r_max: float = 0.5
 
-    # Disk population
+    # Disk population (R ~ 0.5-2.0 = 4-16 kpc)
     disk_n: int = 100
-    disk_hr: float = 3.0
-    disk_sr: float = 0.2
-    disk_sz: float = 0.1
-    disk_hsr: float = 4.0
-    disk_hsz: float = 4.0
-    disk_r_min: float = 1.0
-    disk_r_max: float = 5.0
+    disk_hr: float = 0.375
+    disk_sr: float = 0.16
+    disk_sz: float = 0.09
+    disk_hsr: float = 0.5
+    disk_hsz: float = 0.5
+    disk_r_min: float = 0.5
+    disk_r_max: float = 2.0
 
     def to_potential_config(self) -> PotentialConfig:
         """Convert to a ``PotentialConfig`` for the symmetries package.
@@ -126,12 +127,13 @@ class RunConfig(BaseModel):
             Potential configuration derived from this run config.
         """
         return PotentialConfig(
-            smbh_mass=self.smbh_mass,
-            plummer_mass=self.plummer_mass,
-            plummer_scale=self.plummer_scale,
+            bulge_mass=self.bulge_mass,
+            bulge_scale=self.bulge_scale,
             disk_mass=self.disk_amp,
             disk_a=self.disk_a,
             disk_b=self.disk_b,
+            halo_amp=self.halo_amp,
+            halo_a=self.halo_a,
             bar_strength=self.bar_strength,
             bar_scale=self.bar_scale,
             bar_tform=self.bar_tform,

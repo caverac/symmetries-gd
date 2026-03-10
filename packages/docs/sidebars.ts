@@ -6,7 +6,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Concepts',
-      items: ['concepts/lie-groups', 'concepts/action-angles', 'concepts/connection']
+      items: [
+        'concepts/lie-groups',
+        'concepts/action-angles',
+        'concepts/connection',
+        'concepts/reinterpreting-delta'
+      ]
     },
     {
       type: 'category',

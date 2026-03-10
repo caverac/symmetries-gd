@@ -117,10 +117,10 @@ class TestIntegrateOrbits:
 
 
 class TestComputeActions:
-    """Tests for IsochroneApprox action computation."""
+    """Tests for Staeckel action computation."""
 
     @patch("symmetries.orbits.Orbit")
-    @patch("symmetries.orbits.actionAngleIsochroneApprox")
+    @patch("symmetries.orbits.actionAngleStaeckel")
     def test_returns_jr_array(self, mock_aa_cls: MagicMock, _mock_orbit_cls: MagicMock) -> None:
         """Verify Jr array has correct shape and values."""
         mock_aa = MagicMock()
@@ -139,9 +139,9 @@ class TestComputeActions:
         np.testing.assert_allclose(jz[0, 0], 0.1)
 
     @patch("symmetries.orbits.Orbit")
-    @patch("symmetries.orbits.actionAngleIsochroneApprox")
+    @patch("symmetries.orbits.actionAngleStaeckel")
     def test_action_finder_initialised(self, mock_aa_cls: MagicMock, _mock_orbit_cls: MagicMock) -> None:
-        """Verify actionAngleIsochroneApprox is initialised with potential."""
+        """Verify actionAngleStaeckel is initialised with potential and delta."""
         mock_aa = MagicMock()
         mock_aa_cls.return_value = mock_aa
         mock_aa.return_value = (np.array([0.1]), np.array([0.2]), np.array([0.3]))
@@ -151,7 +151,28 @@ class TestComputeActions:
         phase = PhasePoint(pos=pos, vel=vel, time=np.array([0.0]))
 
         compute_actions(phase, potential=[], delta=0.7)
-        mock_aa_cls.assert_called_once_with(pot=[], b=0.8)
+        mock_aa_cls.assert_called_once_with(pot=[], delta=0.7)
+
+    @patch("symmetries.orbits.Orbit")
+    @patch("symmetries.orbits.actionAngleStaeckel")
+    def test_variable_delta_array(self, mock_aa_cls: MagicMock, _mock_orbit_cls: MagicMock) -> None:
+        """Verify per-point delta creates a new actionAngleStaeckel per snapshot."""
+        mock_aa = MagicMock()
+        mock_aa_cls.return_value = mock_aa
+        mock_aa.return_value = (np.array([0.5]), np.array([1.0]), np.array([0.1]))
+
+        pos = np.array([[[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]]])
+        vel = np.array([[[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]]])
+        time = np.array([0.0, 1.0])
+        phase = PhasePoint(pos=pos, vel=vel, time=time)
+
+        delta_arr = np.array([[0.3, 0.6]])
+        jr, _lz, _jz = compute_actions(phase, potential=[], delta=delta_arr)
+        assert jr.shape == (1, 2)
+        # Should create an actionAngleStaeckel for each (particle, time) pair
+        assert mock_aa_cls.call_count == 2
+        mock_aa_cls.assert_any_call(pot=[], delta=0.3)
+        mock_aa_cls.assert_any_call(pot=[], delta=0.6)
 
 
 class TestGuidingRadiusInterpolator:

@@ -1,7 +1,8 @@
 """Dynamical symmetry breaking in galaxies.
 
-Track phase-space integrals via parameterized Lie algebra deformations
-between SO(4) (Keplerian) and SU(3) (harmonic) symmetry limits.
+Track phase-space integrals via the algebraic deformation from SO(3)
+(spherical bulge) to SO(2) (axial disk) symmetry, using the Staeckel
+focal distance as a gauge field.
 """
 
 from symmetries._types import (
@@ -13,22 +14,16 @@ from symmetries._types import (
     PotentialConfig,
     VarianceComparison,
 )
-from symmetries.analysis import compare_variances, compute_invariants, omega_from_plummer, smbh_influence_radius
+from symmetries.analysis import compare_variances, compute_invariants
 from symmetries.initial_conditions import sample_initial_conditions
-from symmetries.invariants import compute_c2
+from symmetries.invariants import angular_momentum_squared, compute_l_squared, delta_miyamoto_nagai
 from symmetries.orbits import GuidingRadiusInterpolator
-from symmetries.tensors import (
-    angular_momentum_squared,
-    fradkin_tensor,
-    generalized_tensor,
-    lrl_tensor,
-    lrl_vector,
-    tensor_trace_squared,
-)
 
 __version__ = "0.1.0"
 
 __all__ = [
+    "GalpyPotential",
+    "GuidingRadiusInterpolator",
     "InitialConditionsConfig",
     "InvariantResult",
     "PhasePoint",
@@ -38,16 +33,8 @@ __all__ = [
     "__version__",
     "angular_momentum_squared",
     "compare_variances",
-    "GalpyPotential",
-    "compute_c2",
-    "GuidingRadiusInterpolator",
     "compute_invariants",
-    "fradkin_tensor",
-    "generalized_tensor",
-    "lrl_tensor",
-    "lrl_vector",
-    "omega_from_plummer",
+    "compute_l_squared",
+    "delta_miyamoto_nagai",
     "sample_initial_conditions",
-    "smbh_influence_radius",
-    "tensor_trace_squared",
 ]

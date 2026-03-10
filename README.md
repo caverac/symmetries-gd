@@ -1,50 +1,46 @@
-# Symmetries-GD: Dynamical Symmetry Breaking in Galaxies
+# Symmetries-GD: Algebraic Protection of Vertical Action in Disk Galaxies
 
-This project investigates a novel mathematical framework for tracking orbital structures in migrating stars: **Parameterized Lie Algebra Deformations**.
+Why is the vertical action $J_z$ conserved during bar-driven radial migration, even as the radial action $J_R$ changes dramatically? This project proposes and tests an algebraic answer based on Lie algebra deformations.
 
-## 1. The Idea
+## The argument
 
-Traditional galactic dynamics relies on action-angle variables $(J_R, J_\phi, J_z)$, which often fail during radial migration. When a star is scattered (e.g., by a galactic bar) from the inner regions to the outer bulge, the underlying gravitational symmetry changes.
+A galaxy's gravitational potential has layered symmetry. The spherical bulge has $SO(3)$ symmetry (conserved $L^2$); the flattened disk breaks this to $SO(2)$ (only $L_z$ survives). In the theory of Lie algebra deformations, the Casimir invariant of the original algebra does not vanish under symmetry breaking -- it **deforms** into a new invariant of the reduced algebra.
 
-The core hypothesis was that by modeling the galaxy as a continuous deformation between two Lie algebras, we could derive a **Deformed Casimir Invariant ($C_2$)** that remains conserved even when traditional actions exhibit chaotic variance.
+For the $\mathfrak{so}(3) \to \mathfrak{so}(2)$ breaking, the deformation parameter is the **Staeckel focal distance** $\Delta(R)$, which measures the potential's departure from spherical symmetry. The third integral $I_3$ in Staeckel potentials is identified as the deformed Casimir, and the vertical action $J_z$ -- computed in confocal coordinates parameterized by $\Delta$ -- inherits its conservation. A bar perturbation acts within $SO(2)$ and cannot change the deformed Casimir.
 
-## 2. Theoretical Motivation
+## The evidence
 
-Galactic potentials possess exact symmetries at their radial extremes:
+In a Milky-Way-like potential (Hernquist bulge + Miyamoto-Nagai disk + NFW halo + Dehnen bar), we integrated 2000 stellar orbits over a Hubble time:
 
-- **Inner Limit (SMBH):** A Keplerian $1/r$ potential with $SO(4)$ symmetry (conserved Laplace-Runge-Lenz vector).
-- **Outer Limit (Bulge):** A Harmonic $r^2$ potential with $SU(3)$ symmetry (conserved Fradkin tensor).
+$$
+\frac{\sigma(J_z)}{|L_{z,0}|} \sim 10^{-3}, \qquad \frac{\sigma(J_R)}{|L_{z,0}|} \sim 10^{-1}
+$$
 
-We constructed a parameterized symmetry operator:
-$$Q_{ij}(\lambda) = \frac{p_i p_j}{2m} + \Psi(r, \lambda) x_i x_j + \Phi(r, \lambda) \delta_{ij}$$
-where $\Psi(r)$ and $\Phi(r)$ are structural functions that interpolate the force-gradient and potential-shift across the transition region.
+Across the full ensemble, $J_z$ varies **~50 times less** than $J_R$. In the outer disk ($R_g > 7$ kpc), where the Staeckel deformation is largest, $J_z$ is conserved **~2000 times** better than $J_R$. Even stars that migrate by $\Delta R_g \sim 4$--$9$ kpc show $\sigma(J_z) \approx 0$.
 
-## 3. Experimental Suite
+## Documentation
 
-We built a CLI-driven pipeline to test the stability of $C_2$ against traditional radial actions ($J_R$):
+Full writeup with derivations, figures, and references: [symmetries-gd.vercel.app](https://symmetries-gd.vercel.app)
 
-- **Limit Tests:** Verified $C_2$ conservation in pure Keplerian and Harmonic potentials.
-- **Stress Tests:** Evaluated performance in chaotic regimes by sweeping the strength of a rotating Dehnen bar.
-- **Convergence Tests:** Checked for adiabatic invariance by varying the formation time of the galactic bar.
+## Project structure
 
-## 4. Why It Fails
+- `packages/symmetries`: Core physics library (galpy-based orbit integration, action computation, Staeckel analysis).
+- `packages/experiments`: CLI tools for simulation, plotting, and analysis.
+- `packages/docs`: Docusaurus site with the full writeup.
+- `packages/infrastructure`: Deployment configuration.
 
-Despite the mathematical elegance, the empirical data forced a **NO-GO** recommendation:
+## Quick start
 
-1. **The Transition Floor:** In the composite potential, $C_2$ exhibits a variance floor of $\sim 10^{-8}$. This is 4--5 orders of magnitude less stable than traditional actions ($\sim 10^{-12}$).
-2. **Lack of Adiabaticity:** Slower migration (more adiabatic transitions) did not improve $C_2$ stability, indicating it is not a robust invariant during the radial "jump" between symmetries.
-3. **Non-Integrability:** The intermediate region between $1/r$ and $r^2$ does not possess a closed-form symmetry group. Simple parameterized structural functions are insufficient to capture the broken integrability of a real galactic potential.
+```bash
+# Install dependencies
+uv sync
 
-## 5. Takeaways
+# Run a simulation
+uv run experiments simulate --name mw --n-particles 1000
 
-- **Limits are Easy, Transitions are Hard:** Proving conservation in pure $SO(4)$ or $SU(3)$ cases is trivial; the project failed because the deformation path does not preserve the symplectic structure of the orbits.
-- **Traditional Actions are Resilient:** Even in migrating systems, traditional $J_R$ (calculated via Staeckel approximation) is remarkably stable compared to experimental "algebraic" alternatives.
-- **Future Directions:** A viable alternative would likely require non-linear Lie algebras or numerical basis functions rather than the analytical "parameterized" approach explored here.
-
----
-
-### Project Structure
-
-- `packages/symmetries`: Core tensor algebra and invariant logic.
-- `packages/experiments`: CLI tools for simulation and variance analysis.
-- `notebooks/notes/logs`: Detailed research logs and evaluation history.
+# Generate figures
+uv run experiments action-scatter --name mw
+uv run experiments migration-scatter --name mw
+uv run experiments potential-plot
+uv run experiments delta-plot
+```

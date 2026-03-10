@@ -5,13 +5,23 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from experiments._plotting import configure_axes, docs_figure, save_figure_if_changed
+from experiments._plotting import configure_axes, docs_figure, paper_style, save_figure_if_changed
 from matplotlib.figure import Figure
 
 
 def _make_figure() -> Figure:
     fig, _ = plt.subplots()
     return fig
+
+
+class TestPaperStyle:
+    """Tests for the paper_style helper."""
+
+    def test_returns_dict(self) -> None:
+        """Verify paper_style returns a non-empty dict."""
+        style = paper_style()
+        assert isinstance(style, dict)
+        assert "font.family" in style
 
 
 class TestConfigureAxes:
@@ -81,12 +91,25 @@ class TestDocsFigure:
     """Tests for the docs_figure decorator."""
 
     def test_decorator(self, docs_img_dir: Path) -> None:
-        """Verify the decorator saves the figure and returns its path."""
+        """Verify the decorator saves the figure and prints status."""
 
         @docs_figure("test-output.png")
         def build() -> Figure:
             return _make_figure()
 
-        dest = build()
-        assert dest == docs_img_dir / "test-output.png"
-        assert dest.exists()
+        result = build()
+        assert isinstance(result, Figure)
+        assert (docs_img_dir / "test-output.png").exists()
+
+    def test_unchanged_skips_write(self, docs_img_dir: Path) -> None:
+        """Verify the decorator prints 'Unchanged' when content is identical."""
+
+        @docs_figure("test-unchanged.png")
+        def build() -> Figure:
+            return _make_figure()
+
+        build()
+        assert (docs_img_dir / "test-unchanged.png").exists()
+        # Second call with identical figure should hit the "Unchanged" branch
+        result = build()
+        assert isinstance(result, Figure)

@@ -2,24 +2,28 @@
 
 from pathlib import Path
 
-DOCS_IMG_DIR: Path = Path(__file__).resolve().parents[4] / "docs" / "static" / "img"
+DOCS_IMG_DIR: Path = Path(__file__).resolve().parents[4] / "packages" / "docs" / "static" / "img"
 
-# Defaults used by plot/analysis commands (stress-test, convergence, limit-test, migration-plot)
+# galpy natural-unit conversion factors
+R0_KPC: float = 8.0
+"""Solar galactocentric radius in kpc."""
+
+V0_KMS: float = 220.0
+"""Circular velocity at the Sun in km/s."""
+
+KPC_TO_KM: float = 3.0857e16
+"""1 kpc in km."""
+
+TIME_UNIT_GYR: float = R0_KPC * KPC_TO_KM / V0_KMS / 3.1557e16
+"""1 galpy time unit (R0/V0) in Gyr ~ 0.0356 Gyr ~ 35.6 Myr."""
+
+# Defaults used by plot/analysis commands (limit-test, migration-plot)
 DEFAULT_N_PARTICLES: int = 200
-DEFAULT_R_MIN: float = 0.1
-DEFAULT_R_MAX: float = 0.3
-DEFAULT_T_END: float = 2.0
+DEFAULT_R_MIN: float = 0.3
+DEFAULT_R_MAX: float = 1.5
+DEFAULT_T_END: float = 4.0
 DEFAULT_N_STEPS: int = 100
-DEFAULT_DELTA: float = 0.5
 DEFAULT_SEED: int = 42
 
 DEFAULT_LIMIT_THRESHOLD: float = 1e-12
 DEFAULT_LIMIT_N_PARTICLES: int = 50
-
-DEFAULT_STRESS_BAR_MIN: float = 0.01
-DEFAULT_STRESS_BAR_MAX: float = 1.0
-DEFAULT_STRESS_N_POINTS: int = 10
-
-DEFAULT_CONV_TFORM_MIN: float = -10.0
-DEFAULT_CONV_TFORM_MAX: float = -0.5
-DEFAULT_CONV_N_POINTS: int = 10

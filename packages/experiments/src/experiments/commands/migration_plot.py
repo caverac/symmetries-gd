@@ -1,34 +1,39 @@
-"""Three-panel plot showing migration, C_2, and J_R for three particles."""
+"""Three-panel time-trace plot: R_g, J_z, J_R for three selected particles."""
 
 from __future__ import annotations
 
+import sqlite3
+from pathlib import Path
+
 import click
+import matplotlib.pyplot as plt
 import numpy as np
 from experiments._console import console
-from experiments._constants import DEFAULT_DELTA, DEFAULT_SEED
-from experiments._plotting import configure_axes, docs_figure
+from experiments._constants import R0_KPC, TIME_UNIT_GYR
+from experiments._plotting import configure_axes, docs_figure, paper_style
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from symmetries import PotentialConfig
+from numpy.typing import NDArray
 
 
 @docs_figure("migration-traces.png")
 def _build_figure(
-    time: np.ndarray,
-    r_guide: np.ndarray,
-    c2: np.ndarray,
-    jr: np.ndarray,
+    time_gyr: NDArray[np.floating],
+    rg_kpc: NDArray[np.floating],
+    jz: NDArray[np.floating],
+    jr: NDArray[np.floating],
     labels: list[str],
 ) -> Figure:
     """Build the three-panel migration figure.
 
     Parameters
     ----------
-    time : ndarray
-        Time array, shape ``(n_times,)``.
-    r_guide : ndarray
-        Guiding radius for selected particles, shape ``(3, n_times)``.
-    c2 : ndarray
-        C_2 for selected particles, shape ``(3, n_times)``.
+    time_gyr : ndarray
+        Time array in Gyr, shape ``(n_times,)``.
+    rg_kpc : ndarray
+        Guiding radius in kpc for selected particles, shape ``(3, n_times)``.
+    jz : ndarray
+        J_z for selected particles, shape ``(3, n_times)``.
     jr : ndarray
         J_R for selected particles, shape ``(3, n_times)``.
     labels : list[str]
@@ -39,110 +44,127 @@ def _build_figure(
     Figure
         Matplotlib figure.
     """
-    import matplotlib.pyplot as plt
+    colors = ["#1a1a1a", "#4f4f4f", "#303030"]
+    linestyles = ["-", "--", "-."]
+    fig: Figure
+    axes: tuple[Axes, Axes, Axes]
 
-    colors = ["#1a1a1a", "#e63946", "#5ba3cf"]
+    with plt.rc_context(paper_style()):
+        fig, axes = plt.subplots(3, 1, figsize=(4.5, 7), sharex=True)
 
-    fig, axes = plt.subplots(3, 1, figsize=(7, 7.5), sharex=True)
+        for i in range(3):
+            axes[0].plot(time_gyr, rg_kpc[i], color=colors[i], lw=2, linestyle=linestyles[i])
+            axes[1].plot(time_gyr, jz[i], color=colors[i], lw=2, linestyle=linestyles[i], label=labels[i])
+            axes[2].plot(time_gyr, jr[i], color=colors[i], lw=2, linestyle=linestyles[i])
 
-    for i in range(3):
-        axes[0].plot(time, r_guide[i], color=colors[i], lw=1.2, label=labels[i])
-        axes[1].plot(time, c2[i], color=colors[i], lw=1.2)
-        axes[2].plot(time, jr[i], color=colors[i], lw=1.2)
+        axes[0].set_ylabel(r"$R_g$ (kpc)")
+        axes[1].legend(frameon=False, loc="upper left")
+        axes[1].set_ylabel(r"$J_z$")
+        axes[2].set_ylabel(r"$J_R$")
+        axes[2].set_xlabel("Time (Gyr)")
 
-    axes[0].set_ylabel(r"$R_g$ (natural units)")
-    axes[0].legend(frameon=False, fontsize=9)
-    axes[1].set_ylabel(r"$C_2$")
-    axes[2].set_ylabel(r"$J_R$")
-    axes[2].set_xlabel(r"$t$ (natural units)")
+        for ax in axes:
+            configure_axes(ax)
 
-    for ax in axes:
-        configure_axes(ax)
-
-    fig.align_ylabels(axes)
-    fig.tight_layout(h_pad=0.4)
+        fig.align_ylabels(axes)
+        fig.tight_layout(h_pad=0.4)
 
     return fig
 
 
 def _pick_particles(
-    r_cyl: np.ndarray,
+    rg: NDArray[np.floating],
+    r_target: float = 0.9,
+    band: float = 0.15,
 ) -> tuple[int, int, int]:
-    """Select three particles: non-migrating, outward, inward.
+    """Select three particles starting near the same radius.
+
+    Restricts to particles with initial R_g within ``r_target +/- band``,
+    then picks non-migrating, outward, and inward migrators from that subset.
 
     Parameters
     ----------
-    r_cyl : ndarray
-        Cylindrical radius, shape ``(n_particles, n_times)``.
+    rg : ndarray
+        Guiding radius, shape ``(n_particles, n_times)``.
+    r_target : float
+        Target initial guiding radius (natural units). Default 0.8 (~6.4 kpc).
+    band : float
+        Half-width of the radial band (natural units). Default 0.15 (~1.2 kpc).
 
     Returns
     -------
     tuple[int, int, int]
         Indices of the three selected particles.
     """
-    n_quarter = r_cyl.shape[1] // 4
-    r_early = np.mean(r_cyl[:, :n_quarter], axis=1)
-    r_late = np.mean(r_cyl[:, -n_quarter:], axis=1)
-    dr = r_late - r_early
+    rg0 = rg[:, 0]
+    in_band = np.where(np.abs(rg0 - r_target) < band)[0]
+    if len(in_band) < 3:
+        in_band = np.arange(len(rg0))
 
-    i_stay = int(np.argmin(np.abs(dr)))
-    i_out = int(np.argmax(dr))
-    i_in = int(np.argmin(dr))
-
+    # Non-migrator: smallest temporal standard deviation (truly constant Rg)
+    rg_std = np.std(rg[in_band], axis=1)
+    i_stay = in_band[int(np.argmin(rg_std))]
+    # Outward/inward: largest endpoint change, excluding the non-migrator
+    remaining = in_band[in_band != i_stay]
+    dr_remaining = rg[remaining, -1] - rg[remaining, 0]
+    i_out = remaining[int(np.argmax(dr_remaining))]
+    i_in = remaining[int(np.argmin(dr_remaining))]
     return i_stay, i_out, i_in
 
 
 @click.command("migration-plot")
-@click.option("-n", "--n-particles", type=int, default=200, show_default=True, help="Particles.")
-@click.option("--bar-strength", type=float, default=0.05, show_default=True, help="Bar strength.")
-@click.option("--r-min", type=float, default=0.3, show_default=True, help="Min initial radius.")
-@click.option("--r-max", type=float, default=1.5, show_default=True, help="Max initial radius.")
-@click.option("--t-end", type=float, default=4.0, show_default=True, help="Integration end time.")
-@click.option("--n-steps", type=int, default=300, show_default=True, help="Number of time steps.")
-@click.option("--delta", type=float, default=DEFAULT_DELTA, show_default=True, help="Staeckel delta.")
-@click.option("--seed", type=int, default=DEFAULT_SEED, show_default=True, help="Random seed.")
-def migration_plot(
-    n_particles: int,
-    bar_strength: float,
-    r_min: float,
-    r_max: float,
-    t_end: float,
-    n_steps: int,
-    delta: float,
-    seed: int,
-) -> None:
-    """Three-panel plot: R_g, C_2, J_R for migrating and non-migrating stars."""
-    from experiments.commands._shared import run_single_simulation
+@click.option("--name", required=True, help="Run name in the database.")
+@click.option(
+    "--db",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=Path("packages/experiments/data/simulations.db"),
+    show_default=True,
+    help="Path to the simulations database.",
+)
+def migration_plot(name: str, db: Path) -> None:
+    """Three-panel plot: R_g, J_z, J_R for migrating and non-migrating stars."""
+    conn = sqlite3.connect(str(db))
+    row = conn.execute("SELECT id FROM runs WHERE name = ?", (name,)).fetchone()
+    if row is None:
+        raise click.ClickException(f"Run '{name}' not found in {db}.")
+    run_id: int = row[0]
 
-    config = PotentialConfig(bar_strength=bar_strength)
+    rows = conn.execute(
+        "SELECT particle_idx, time, jr, jz, guiding_radius "
+        "FROM snapshots WHERE run_id = ? ORDER BY particle_idx, time",
+        (run_id,),
+    ).fetchall()
+    conn.close()
 
-    console.print(f"[bold]Integrating {n_particles} orbits (bar_strength={bar_strength})...[/bold]")
-    result, _ = run_single_simulation(config, n_particles, r_min, r_max, t_end, n_steps, delta, seed)
+    data = np.array(rows)
+    pids = np.unique(data[:, 0].astype(int))
+    n_times = len(np.unique(data[:, 1]))
+    n_p = len(pids)
 
-    # Cylindrical radius from Cartesian positions
-    pos = result.phase.pos  # (n_particles, n_times, 3)
-    r_cyl = np.sqrt(pos[:, :, 0] ** 2 + pos[:, :, 1] ** 2)
+    times = np.unique(data[:, 1])
+    jr = data[:, 2].reshape(n_p, n_times)
+    jz = data[:, 3].reshape(n_p, n_times)
+    rg = data[:, 4].reshape(n_p, n_times)
 
-    # Guiding radius proxy: running mean of R over a window
-    kernel = max(1, r_cyl.shape[1] // 20)
-    r_guide = np.apply_along_axis(lambda m: np.convolve(m, np.ones(kernel) / kernel, mode="same"), axis=1, arr=r_cyl)
+    # Exclude particles with any sentinel J_R
+    good = ~(jr >= 9000).any(axis=1)
+    jr = jr[good]
+    jz = jz[good]
+    rg = rg[good]
 
-    i_stay, i_out, i_in = _pick_particles(r_cyl)
+    i_stay, i_out, i_in = _pick_particles(rg)
     idx = [i_stay, i_out, i_in]
-    labels = ["Non-migrating", "Outward migration", "Inward migration"]
+    labels = ["Non-migrating", "Outward migrator", "Inward migrator"]
 
-    console.print(f"Selected particles: stay={i_stay}, out={i_out}, in={i_in}")
-    console.print(
-        f"  R change: stay={r_guide[i_stay, -1] - r_guide[i_stay, 0]:.3f}, "
-        f"out={r_guide[i_out, -1] - r_guide[i_out, 0]:.3f}, "
-        f"in={r_guide[i_in, -1] - r_guide[i_in, 0]:.3f}"
-    )
+    dr_kpc = (rg[idx, -1] - rg[idx, 0]) * R0_KPC
+    console.print(f"Particles: {int(good.sum())}/{n_p} (sentinel-free)")
+    console.print(f"Selected: stay={i_stay}, out={i_out}, in={i_in}")
+    console.print(f"  dRg (kpc): stay={dr_kpc[0]:.1f}, out={dr_kpc[1]:.1f}, in={dr_kpc[2]:.1f}")
 
-    dest = _build_figure(
-        result.time,
-        r_guide[idx],
-        result.c2[idx],
-        result.jr[idx],
+    _build_figure(
+        times * TIME_UNIT_GYR,
+        rg[idx] * R0_KPC,
+        jz[idx],
+        jr[idx],
         labels,
     )
-    console.print(f"Saved: {dest}")

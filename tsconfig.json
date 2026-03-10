@@ -13,5 +13,5 @@
     "composite": true,
     "noEmitOnError": true
   },
-  "references": []
+  "references": [{ "path": "packages/infrastructure" }]
 }
