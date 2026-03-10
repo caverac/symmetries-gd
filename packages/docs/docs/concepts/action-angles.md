@@ -36,7 +36,9 @@ During migration, the radial action $J_R$ is no longer conserved. As a star cros
 
 This project challenges that interpretation. Rather than concluding that all actions break down equally, we ask: **why does the bar destroy $J_R$ but leave $J_z$ untouched?**
 
-The answer lies in the [symmetry algebra](lie-groups). The disk potential breaks the spherical $SO(3)$ symmetry down to axial $SO(2)$, and the bar perturbation acts entirely within the surviving $SO(2)$ subalgebra -- it generates planar torques that reshuffle radial orbits. The vertical action $J_z$, as the [deformed Casimir](lie-groups#the-deformed-casimir-is-j_z) of the $\mathfrak{so}(3) \to \mathfrak{so}(2)$ breaking, commutes with all such planar perturbations. It is algebraically protected.
+The answer lies in the combination of **geometric adaptation** and **decoupling**. The disk potential breaks the spherical $SO(3)$ symmetry down to axial $SO(2)$, and the bar perturbation further breaks $SO(2)$ to drive migration. However, the bar is a **planar perturbation**: it generates torques that reshuffle radial orbits and change $L_z$, but it does not exert direct vertical forces.
+
+The vertical action $J_z$, identified here as the [deformed Casimir](lie-groups#identifying-the-deformed-casimir) of the $\mathfrak{so}(3) \to \mathfrak{so}(2)$ breaking, is the quantity that is adiabatically protected under such planar perturbations. Because the vertical frequency is much higher than the orbital frequencies, and because the Staeckel focal distance $\Delta(R)$ adapts the action definition to the local potential, $J_z$ remains nearly constant even as $J_R$ and $L_z$ are dramatically reshuffled.
 
 ## References
 

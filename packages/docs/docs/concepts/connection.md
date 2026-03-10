@@ -110,7 +110,7 @@ $$
 \frac{\sigma(J_z)}{|L_{z,0}|} \ll \frac{\sigma(J_R)}{|L_{z,0}|}
 $$
 
-If $J_z$ is indeed the deformed Casimir -- algebraically protected from planar perturbations -- then its normalized variability should be much smaller than that of $J_R$, regardless of how far the star migrates.
+If $J_z$ is the correct deformed Casimir -- adapting its definition to the local potential -- then its normalized variability should remain much smaller than that of $J_R$, reflecting its adiabatic protection from planar perturbations regardless of how far the star migrates.
 
 The [results section](../results/staeckel-potential) reports the outcome.
 
