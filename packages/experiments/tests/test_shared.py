@@ -11,8 +11,9 @@ from symmetries._types import InvariantResult, PhasePoint, PotentialConfig, Vari
 
 def _mock_result(n: int = 2, nt: int = 10) -> InvariantResult:
     return InvariantResult(
-        c2=np.ones((n, nt)),
+        jz=np.ones((n, nt)),
         jr=np.ones((n, nt)),
+        l_sq=np.ones((n, nt)),
         time=np.linspace(0, 1, nt),
         phase=PhasePoint(
             pos=np.zeros((n, nt, 3)),
@@ -24,8 +25,9 @@ def _mock_result(n: int = 2, nt: int = 10) -> InvariantResult:
 
 def _mock_comparison(n: int = 2) -> VarianceComparison:
     return VarianceComparison(
-        var_c2=np.full(n, 0.01),
+        var_jz=np.full(n, 0.01),
         var_jr=np.full(n, 1.0),
+        var_l_sq=np.full(n, 0.05),
         ratio=np.full(n, 0.01),
         median_ratio=0.01,
     )
@@ -43,7 +45,7 @@ class TestRunSingleSimulation:
 
         config = PotentialConfig()
         result, comparison = run_single_simulation(
-            config, n_particles=2, r_min=0.1, r_max=0.3, t_end=1.0, n_steps=10, delta=0.5, seed=42
+            config, n_particles=2, r_min=0.3, r_max=1.5, t_end=1.0, n_steps=10, seed=42
         )
 
         assert isinstance(result, InvariantResult)
@@ -56,8 +58,8 @@ class TestRunSingleSimulation:
         mock_compute.return_value = _mock_result()
         mock_compare.return_value = _mock_comparison()
 
-        config = PotentialConfig(smbh_mass=0.5)
-        run_single_simulation(config, n_particles=2, r_min=0.1, r_max=0.3, t_end=1.0, n_steps=10, delta=0.5, seed=42)
+        config = PotentialConfig(bulge_mass=0.5)
+        run_single_simulation(config, n_particles=2, r_min=0.3, r_max=1.5, t_end=1.0, n_steps=10, seed=42)
 
         call_args = mock_compute.call_args
         assert call_args[0][0] is config

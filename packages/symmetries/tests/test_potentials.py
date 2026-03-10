@@ -5,43 +5,32 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 from symmetries._types import PotentialConfig
-from symmetries.potentials import build_axisymmetric, build_bar, build_composite, build_kepler, build_plummer
+from symmetries.potentials import (
+    build_axisymmetric,
+    build_bar,
+    build_bulge,
+    build_composite,
+    build_disk,
+    build_halo,
+)
 
 
-class TestBuildKepler:
-    """Tests for Kepler potential builder."""
+class TestBuildBulge:
+    """Tests for Hernquist bulge potential builder."""
 
-    @patch("symmetries.potentials.KeplerPotential")
-    def test_calls_with_mass(self, mock_kp: MagicMock) -> None:
-        """Verify KeplerPotential is called with configured SMBH mass."""
-        config = PotentialConfig(smbh_mass=0.1)
-        build_kepler(config)
-        mock_kp.assert_called_once_with(amp=0.1)
+    @patch("symmetries.potentials.HernquistPotential")
+    def test_calls_with_params(self, mock_hp: MagicMock) -> None:
+        """Verify HernquistPotential is called with configured mass and scale."""
+        config = PotentialConfig(bulge_mass=0.9, bulge_scale=0.5)
+        build_bulge(config)
+        mock_hp.assert_called_once_with(amp=0.9, a=0.5)
 
-    @patch("symmetries.potentials.KeplerPotential")
-    def test_returns_instance(self, mock_kp: MagicMock) -> None:
-        """Verify build_kepler returns the KeplerPotential instance."""
+    @patch("symmetries.potentials.HernquistPotential")
+    def test_returns_instance(self, mock_hp: MagicMock) -> None:
+        """Verify build_bulge returns the HernquistPotential instance."""
         config = PotentialConfig()
-        result = build_kepler(config)
-        assert result is mock_kp.return_value
-
-
-class TestBuildPlummer:
-    """Tests for Plummer potential builder."""
-
-    @patch("symmetries.potentials.PlummerPotential")
-    def test_calls_with_params(self, mock_pp: MagicMock) -> None:
-        """Verify PlummerPotential is called with configured mass and scale."""
-        config = PotentialConfig(plummer_mass=0.9, plummer_scale=0.5)
-        build_plummer(config)
-        mock_pp.assert_called_once_with(amp=0.9, b=0.5)
-
-    @patch("symmetries.potentials.PlummerPotential")
-    def test_returns_instance(self, mock_pp: MagicMock) -> None:
-        """Verify build_plummer returns the PlummerPotential instance."""
-        config = PotentialConfig()
-        result = build_plummer(config)
-        assert result is mock_pp.return_value
+        result = build_bulge(config)
+        assert result is mock_hp.return_value
 
 
 class TestBuildBar:
@@ -74,36 +63,77 @@ class TestBuildBar:
         assert result is mock_db.return_value
 
 
+class TestBuildDisk:
+    """Tests for Miyamoto-Nagai disk potential builder."""
+
+    @patch("symmetries.potentials.MiyamotoNagaiPotential")
+    def test_calls_with_params(self, mock_mn: MagicMock) -> None:
+        """Verify MiyamotoNagaiPotential is called with configured disk parameters."""
+        config = PotentialConfig(disk_mass=0.5, disk_a=3.0, disk_b=0.2)
+        build_disk(config)
+        mock_mn.assert_called_once_with(amp=0.5, a=3.0, b=0.2)
+
+    @patch("symmetries.potentials.MiyamotoNagaiPotential")
+    def test_returns_instance(self, mock_mn: MagicMock) -> None:
+        """Verify build_disk returns the MiyamotoNagaiPotential instance."""
+        config = PotentialConfig()
+        result = build_disk(config)
+        assert result is mock_mn.return_value
+
+
+class TestBuildHalo:
+    """Tests for NFW halo potential builder."""
+
+    @patch("symmetries.potentials.NFWPotential")
+    def test_calls_with_params(self, mock_nfw: MagicMock) -> None:
+        """Verify NFWPotential is called with configured halo parameters."""
+        config = PotentialConfig(halo_amp=5.0, halo_a=3.0)
+        build_halo(config)
+        mock_nfw.assert_called_once_with(amp=5.0, a=3.0)
+
+    @patch("symmetries.potentials.NFWPotential")
+    def test_returns_instance(self, mock_nfw: MagicMock) -> None:
+        """Verify build_halo returns the NFWPotential instance."""
+        config = PotentialConfig()
+        result = build_halo(config)
+        assert result is mock_nfw.return_value
+
+
 class TestBuildAxiSymmetric:
     """Tests for axisymmetric potential builder."""
 
-    @patch("symmetries.potentials.PlummerPotential")
-    @patch("symmetries.potentials.KeplerPotential")
-    def test_returns_two_components(self, mock_kp: MagicMock, mock_pp: MagicMock) -> None:
-        """Verify axisymmetric returns only Kepler and Plummer."""
+    @patch("symmetries.potentials.NFWPotential")
+    @patch("symmetries.potentials.MiyamotoNagaiPotential")
+    @patch("symmetries.potentials.HernquistPotential")
+    def test_returns_three_components(self, mock_hp: MagicMock, mock_mn: MagicMock, mock_nfw: MagicMock) -> None:
+        """Verify axisymmetric returns bulge, disk, and halo."""
         config = PotentialConfig()
         result = build_axisymmetric(config)
-        assert len(result) == 2
-        assert result[0] is mock_kp.return_value
-        assert result[1] is mock_pp.return_value
+        assert len(result) == 3
+        assert result[0] is mock_hp.return_value
+        assert result[1] is mock_mn.return_value
+        assert result[2] is mock_nfw.return_value
 
 
 class TestBuildComposite:
     """Tests for composite potential builder."""
 
     @patch("symmetries.potentials.DehnenBarPotential")
-    @patch("symmetries.potentials.PlummerPotential")
-    @patch("symmetries.potentials.KeplerPotential")
-    def test_returns_three_components(
+    @patch("symmetries.potentials.NFWPotential")
+    @patch("symmetries.potentials.MiyamotoNagaiPotential")
+    @patch("symmetries.potentials.HernquistPotential")
+    def test_returns_four_components(
         self,
-        mock_kp: MagicMock,
-        mock_pp: MagicMock,
+        mock_hp: MagicMock,
+        mock_mn: MagicMock,
+        mock_nfw: MagicMock,
         mock_db: MagicMock,
     ) -> None:
-        """Verify composite returns Kepler, Plummer, and bar components."""
+        """Verify composite returns bulge, disk, halo, and bar components."""
         config = PotentialConfig()
         result = build_composite(config)
-        assert len(result) == 3
-        assert result[0] is mock_kp.return_value
-        assert result[1] is mock_pp.return_value
-        assert result[2] is mock_db.return_value
+        assert len(result) == 4
+        assert result[0] is mock_hp.return_value
+        assert result[1] is mock_mn.return_value
+        assert result[2] is mock_nfw.return_value
+        assert result[3] is mock_db.return_value

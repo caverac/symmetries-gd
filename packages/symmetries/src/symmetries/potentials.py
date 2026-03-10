@@ -1,50 +1,65 @@
 """Galpy potential construction for the composite galactic model.
 
-Builds the three-component potential: Keplerian SMBH + Plummer bulge +
-rotating Dehnen bar.  This is one of only two modules that import galpy.
+Builds the three-component axisymmetric potential (Hernquist bulge +
+Miyamoto-Nagai disk + NFW halo) plus an optional rotating Dehnen bar
+perturbation.
 """
 
 from __future__ import annotations
 
-from typing import Any
-
-from galpy.potential import DehnenBarPotential, KeplerPotential, PlummerPotential
-from symmetries._types import PotentialConfig
+from galpy.potential import DehnenBarPotential, HernquistPotential, MiyamotoNagaiPotential, NFWPotential
+from symmetries._types import GalpyPotential, PotentialConfig
 
 
-def build_kepler(config: PotentialConfig) -> Any:
-    """Build a Keplerian point-mass potential for the SMBH.
+def build_bulge(config: PotentialConfig) -> GalpyPotential:
+    """Build a Hernquist sphere potential for the stellar bulge.
 
     Parameters
     ----------
     config : PotentialConfig
-        Potential configuration with ``smbh_mass``.
+        Potential configuration with ``bulge_mass`` and ``bulge_scale``.
 
     Returns
     -------
-    KeplerPotential
-        The galpy Kepler potential instance.
+    GalpyPotential
+        The galpy Hernquist potential instance.
     """
-    return KeplerPotential(amp=config.smbh_mass)
+    return HernquistPotential(amp=config.bulge_mass, a=config.bulge_scale)  # type: ignore[no-any-return]
 
 
-def build_plummer(config: PotentialConfig) -> Any:
-    """Build a Plummer sphere potential for the stellar bulge.
+def build_disk(config: PotentialConfig) -> GalpyPotential:
+    """Build a Miyamoto-Nagai disk potential.
 
     Parameters
     ----------
     config : PotentialConfig
-        Potential configuration with ``plummer_mass`` and ``plummer_scale``.
+        Potential configuration with disk parameters.
 
     Returns
     -------
-    PlummerPotential
-        The galpy Plummer potential instance.
+    GalpyPotential
+        The galpy Miyamoto-Nagai disk instance.
     """
-    return PlummerPotential(amp=config.plummer_mass, b=config.plummer_scale)
+    return MiyamotoNagaiPotential(amp=config.disk_mass, a=config.disk_a, b=config.disk_b)  # type: ignore[no-any-return]
 
 
-def build_bar(config: PotentialConfig) -> Any:
+def build_halo(config: PotentialConfig) -> GalpyPotential:
+    """Build an NFW dark matter halo potential.
+
+    Parameters
+    ----------
+    config : PotentialConfig
+        Potential configuration with ``halo_amp`` and ``halo_a``.
+
+    Returns
+    -------
+    GalpyPotential
+        The galpy NFW potential instance.
+    """
+    return NFWPotential(amp=config.halo_amp, a=config.halo_a)  # type: ignore[no-any-return]
+
+
+def build_bar(config: PotentialConfig) -> GalpyPotential:
     """Build a rotating Dehnen bar potential.
 
     Parameters
@@ -54,10 +69,10 @@ def build_bar(config: PotentialConfig) -> Any:
 
     Returns
     -------
-    DehnenBarPotential
+    GalpyPotential
         The galpy Dehnen bar potential instance.
     """
-    return DehnenBarPotential(
+    return DehnenBarPotential(  # type: ignore[no-any-return]
         Af=config.bar_strength,
         rb=config.bar_scale,
         tform=config.bar_tform,
@@ -66,8 +81,8 @@ def build_bar(config: PotentialConfig) -> Any:
     )
 
 
-def build_axisymmetric(config: PotentialConfig) -> list[Any]:
-    """Build the axisymmetric part of the potential (Kepler + Plummer).
+def build_axisymmetric(config: PotentialConfig) -> list[GalpyPotential]:
+    """Build the axisymmetric part of the potential.
 
     Parameters
     ----------
@@ -76,14 +91,14 @@ def build_axisymmetric(config: PotentialConfig) -> list[Any]:
 
     Returns
     -------
-    list
-        List of galpy potential instances ``[kepler, plummer]``.
+    list[GalpyPotential]
+        List of galpy potential instances ``[bulge, disk, halo]``.
     """
-    return [build_kepler(config), build_plummer(config)]
+    return [build_bulge(config), build_disk(config), build_halo(config)]
 
 
-def build_composite(config: PotentialConfig) -> list[Any]:
-    """Build the full three-component galactic potential.
+def build_composite(config: PotentialConfig) -> list[GalpyPotential]:
+    """Build the full galactic potential including the bar.
 
     Parameters
     ----------
@@ -92,7 +107,7 @@ def build_composite(config: PotentialConfig) -> list[Any]:
 
     Returns
     -------
-    list
-        List of galpy potential instances ``[kepler, plummer, bar]``.
+    list[GalpyPotential]
+        List of galpy potential instances ``[bulge, disk, halo, bar]``.
     """
     return [*build_axisymmetric(config), build_bar(config)]

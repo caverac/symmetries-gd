@@ -1,4 +1,4 @@
-"""Kill-switch test: verify C_2 conservation in harmonic and Kepler limits."""
+"""Limit test: verify J_z conservation in pure bulge and pure disk limits."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ import click
 import numpy as np
 from experiments._console import console
 from experiments._constants import (
-    DEFAULT_DELTA,
     DEFAULT_LIMIT_N_PARTICLES,
     DEFAULT_LIMIT_THRESHOLD,
     DEFAULT_N_STEPS,
@@ -25,11 +24,10 @@ from symmetries import PotentialConfig
 @click.command("limit-test")
 @click.option("-n", "--n-particles", type=int, default=DEFAULT_LIMIT_N_PARTICLES, show_default=True, help="Particles.")
 @click.option("--threshold", type=float, default=DEFAULT_LIMIT_THRESHOLD, show_default=True, help="PASS/FAIL cutoff.")
-@click.option("--r-min", type=float, default=DEFAULT_R_MIN, show_default=True, help="Min initial radius (kpc).")
-@click.option("--r-max", type=float, default=DEFAULT_R_MAX, show_default=True, help="Max initial radius (kpc).")
-@click.option("--t-end", type=float, default=DEFAULT_T_END, show_default=True, help="Integration end time (Gyr).")
+@click.option("--r-min", type=float, default=DEFAULT_R_MIN, show_default=True, help="Min initial radius.")
+@click.option("--r-max", type=float, default=DEFAULT_R_MAX, show_default=True, help="Max initial radius.")
+@click.option("--t-end", type=float, default=DEFAULT_T_END, show_default=True, help="Integration end time.")
 @click.option("--n-steps", type=int, default=DEFAULT_N_STEPS, show_default=True, help="Number of time steps.")
-@click.option("--delta", type=float, default=DEFAULT_DELTA, show_default=True, help="Staeckel delta parameter.")
 @click.option("--seed", type=int, default=DEFAULT_SEED, show_default=True, help="Random seed.")
 @click.option(
     "--output-dir",
@@ -45,35 +43,34 @@ def limit_test(
     r_max: float,
     t_end: float,
     n_steps: int,
-    delta: float,
     seed: int,
     output_dir: Path,
 ) -> None:
-    """Kill-switch test: C_2 conservation in harmonic and Kepler limits."""
-    console.print("[bold]Running harmonic limit (smbh_mass~0)...[/bold]")
-    harmonic_config = PotentialConfig(smbh_mass=1e-10, plummer_mass=1.0, bar_strength=0.0)
-    _, harmonic_comp = run_single_simulation(harmonic_config, n_particles, r_min, r_max, t_end, n_steps, delta, seed)
+    """Limit test: J_z conservation in pure bulge and pure disk limits."""
+    console.print("[bold]Running spherical limit (disk_mass~0)...[/bold]")
+    bulge_config = PotentialConfig(bulge_mass=1.0, disk_mass=1e-10, halo_amp=0.0, bar_strength=0.0)
+    _, bulge_comp = run_single_simulation(bulge_config, n_particles, r_min, r_max, t_end, n_steps, seed)
 
-    console.print("[bold]Running Kepler limit (plummer_mass~0)...[/bold]")
-    kepler_config = PotentialConfig(smbh_mass=1.0, plummer_mass=0.0, bar_strength=0.0)
-    _, kepler_comp = run_single_simulation(kepler_config, n_particles, r_min, r_max, t_end, n_steps, delta, seed)
+    console.print("[bold]Running disk limit (bulge_mass~0)...[/bold]")
+    disk_config = PotentialConfig(bulge_mass=1e-10, disk_mass=1.0, halo_amp=0.0, bar_strength=0.0)
+    _, disk_comp = run_single_simulation(disk_config, n_particles, r_min, r_max, t_end, n_steps, seed)
 
-    harmonic_median = float(np.median(harmonic_comp.var_c2))
-    kepler_median = float(np.median(kepler_comp.var_c2))
-    harmonic_pass = harmonic_median < threshold
-    kepler_pass = kepler_median < threshold
+    bulge_median = float(np.median(bulge_comp.var_jz))
+    disk_median = float(np.median(disk_comp.var_jz))
+    bulge_pass = bulge_median < threshold
+    disk_pass = disk_median < threshold
 
     table = Table(title="Limit Test Results")
     table.add_column("Limit", style="bold")
-    table.add_column("Median Var(C_2)")
+    table.add_column("Median Var(J_z)")
     table.add_column("Threshold")
     table.add_column("Status")
 
-    h_status = "[green]PASS[/green]" if harmonic_pass else "[red]FAIL[/red]"
-    k_status = "[green]PASS[/green]" if kepler_pass else "[red]FAIL[/red]"
+    b_status = "[green]PASS[/green]" if bulge_pass else "[red]FAIL[/red]"
+    d_status = "[green]PASS[/green]" if disk_pass else "[red]FAIL[/red]"
 
-    table.add_row("Harmonic", f"{harmonic_median:.6e}", f"{threshold:.1e}", h_status)
-    table.add_row("Kepler", f"{kepler_median:.6e}", f"{threshold:.1e}", k_status)
+    table.add_row("Spherical (bulge)", f"{bulge_median:.6e}", f"{threshold:.1e}", b_status)
+    table.add_row("Disk", f"{disk_median:.6e}", f"{threshold:.1e}", d_status)
 
     console.print(table)
 
@@ -82,15 +79,15 @@ def limit_test(
 
     np.savez(
         out_path,
-        harmonic_var_c2=harmonic_comp.var_c2,
-        harmonic_var_jr=harmonic_comp.var_jr,
-        harmonic_median_var_c2=np.array(harmonic_median),
-        kepler_var_c2=kepler_comp.var_c2,
-        kepler_var_jr=kepler_comp.var_jr,
-        kepler_median_var_c2=np.array(kepler_median),
+        bulge_var_jz=bulge_comp.var_jz,
+        bulge_var_jr=bulge_comp.var_jr,
+        bulge_median_var_jz=np.array(bulge_median),
+        disk_var_jz=disk_comp.var_jz,
+        disk_var_jr=disk_comp.var_jr,
+        disk_median_var_jz=np.array(disk_median),
         threshold=np.array(threshold),
-        harmonic_pass=np.array(harmonic_pass),
-        kepler_pass=np.array(kepler_pass),
+        bulge_pass=np.array(bulge_pass),
+        disk_pass=np.array(disk_pass),
         n_particles=np.array(n_particles),
     )
 

@@ -15,7 +15,8 @@ export default [
       '**/.docusaurus/**',
       '**/coverage/**',
       '.yarn/**',
-      '.venv/**'
+      '.venv/**',
+      '**/cdk.out/**'
     ]
   },
   eslint.configs.recommended,
